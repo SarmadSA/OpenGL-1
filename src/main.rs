@@ -40,7 +40,47 @@ fn offset<T>(n: u32) -> *const c_void {
 }
 
 // == // Modify and complete the function below for the first task
-// unsafe fn FUNCTION_NAME(ARGUMENT_NAME: &Vec<f32>, ARGUMENT_NAME: &Vec<u32>) -> u32 { } 
+unsafe fn FUNCTION_NAME(vertices: &Vec<f32>, indices: &Vec<u32>) -> u32 { 
+    let array: u32 = 0;
+    gl::GenVertexArray(1, &array); 
+    gl::BindVertexArray(array);
+
+    let array2: u32 = 0; 
+    gl::GenBuffers(1, &array2);  
+    gl::BindBuffer(gl::ARRAY_BUFFER, array2);
+
+    //float vertices[] = {1.0, 3.0, 2.0, 5.0, 4.0, 3.0, 2.0, 6.0, 3.0}; //TODO: this is C++ syntacs make to rust
+    gl:BufferData(gl::ARRAY_BUFFER, vertices::len() * size_of(float), vertices, gl::STATIC_DRAW);
+    
+
+    gl::VertexAttribPointer(1, 3, gl::FLOAT, gl::FALSE, 0, 0);
+    gl::EnableVertexAttribArray(1); //index is same as in previwes line
+
+
+
+    //INDEX BUFFER (index buffer spesifies how the vertesies in databuffer should be combined together, else we wont know which points are connected and not)
+    let array3: u32 = 0; 
+    gl::GenBuffers(1, &array3);
+    gl::BindBuffer(gl::ELEMENT_ARRAY_BUFFER, array3);
+
+    //Integer indices[] = {1, 3, 2, 5, 4, 3, 2, 6, 3}; //TODO: this is C++ syntacs, make to rust code
+    gl:BufferData(gl::ELEMENT_ARRAY_BUFFER, indices.len() * size_of(Integer), indices, gl::STATIC_DRAW);
+
+
+
+
+    
+    //Find the max (for index (the first parameter) in function glVertexattribPointer)
+    //int maxVertexAttribs;
+    //glGetIntegerv(gl::MAX_VERTEX_ATTRIBS, &maxVertexAttribs);
+    //printf("gl::MAX_VERTEX_ATTRIBS: %i\n", maxVertexAttribs);
+
+
+
+
+    arrayID;
+    //array;
+} 
 
 fn main() {
     // Set up the necessary objects to deal with windows and event handling
@@ -86,7 +126,8 @@ fn main() {
         // Basic usage of shader helper
         // The code below returns a shader object, which contains the field .program_id
         // The snippet is not enough to do the assignment, and will need to be modified (outside of just using the correct path)
-        // shader::ShaderBuilder::new().attach_file("./path/to/shader").link();
+        shader::ShaderBuilder::new().attach_file("../shaders/simple.vert").link();
+
 
         // Used to demonstrate keyboard handling -- feel free to remove
         let mut _arbitrary_number = 0.0;
@@ -123,7 +164,7 @@ fn main() {
 
                 // Issue the necessary commands to draw your scene here
 
-
+                gl:DrawElements(gl::TRIANGLES, 3, gl::UNSIGNED_INT, 0);
 
 
 
