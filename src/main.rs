@@ -40,7 +40,7 @@ fn offset<T>(n: u32) -> *const c_void {
 }
 
 // == // Modify and complete the function below for the first task
-unsafe fn setupVAO(vertices: &Vec<f32>, indices: &Vec<u32>) -> u32 { 
+unsafe fn setup_vao(vertices: &Vec<f32>, indices: &Vec<u32>) -> u32 { 
     let mut array: u32 = 0;
     gl::GenVertexArrays(1, &mut array); 
     gl::BindVertexArray(array);
@@ -54,7 +54,7 @@ unsafe fn setupVAO(vertices: &Vec<f32>, indices: &Vec<u32>) -> u32 {
     
 
     gl::VertexAttribPointer(0, 3, gl::FLOAT, gl::FALSE, 0, ptr::null());
-    gl::EnableVertexAttribArray(1); //index is same as in previwes line
+    gl::EnableVertexAttribArray(0); //index is same as in previwes line
 
 
 
@@ -126,7 +126,7 @@ fn main() {
                 0.0, 0.6, 0.0
             ];
             let indices: Vec<u32> = vec![0, 1, 2, 3, 4, 5, 6, 7, 8];
-            setupVAO(&vertices, &indices)
+            setup_vao(&vertices, &indices)
         
             
         };
@@ -135,7 +135,7 @@ fn main() {
         // The code below returns a shader object, which contains the field .program_id
         // The snippet is not enough to do the assignment, and will need to be modified (outside of just using the correct path)
         let shader = unsafe{
-            shader::ShaderBuilder::new().attach_file("./shaders/simple.vert").attach_file("./shaders/simple.frag").link()
+            shader::ShaderBuilder::new().attach_file("../shaders/simple.vert").attach_file("../shaders/simple.frag").link()
         };
 
         // Used to demonstrate keyboard handling -- feel free to remove
