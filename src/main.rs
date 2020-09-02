@@ -53,7 +53,7 @@ unsafe fn setupVAO(vertices: &Vec<f32>, indices: &Vec<u32>) -> u32 {
     gl::BufferData(gl::ARRAY_BUFFER, byte_size_of_array(&vertices), pointer_to_array(&vertices), gl::STATIC_DRAW);
     
 
-    gl::VertexAttribPointer(1, 3, gl::FLOAT, gl::FALSE, 0, ptr::null());
+    gl::VertexAttribPointer(0, 3, gl::FLOAT, gl::FALSE, 0, ptr::null());
     gl::EnableVertexAttribArray(1); //index is same as in previwes line
 
 
