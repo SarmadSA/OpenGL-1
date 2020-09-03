@@ -121,10 +121,86 @@ fn main() {
         // == // Set up your VAO here
         let value = unsafe {
             let vertices: Vec<f32> = vec![
-                -0.6, -0.6, 0.0, 
-                0.6, -0.6, 0.0, 
-                0.0, 0.6, 0.0
+                //Triangle 1
+                0.9, -0.9, 0.0, 
+                0.9, -0.4, 0.0, 
+                0.4, -0.9, 0.0,
             ];
+
+            //-0.1, -0.1, 0.0, 
+            //0.1, -0.1, 0.0, 
+            //0.1, 0.1, 0.0
+            let indices: Vec<u32> = vec![0, 1, 2, 3, 4, 5, 6, 7, 8];
+            setup_vao(&vertices, &indices)
+        
+            
+        };
+
+        let value2 = unsafe {
+            let vertices: Vec<f32> = vec![
+                //Triangle 2
+                -0.9, -0.9, 0.0, 
+                -0.5, -0.9, 0.0, 
+                -0.9, -0.5, 0.0,
+            ];
+
+            let indices: Vec<u32> = vec![0, 1, 2, 3, 4, 5, 6, 7, 8];
+            setup_vao(&vertices, &indices)
+        
+            
+        };
+
+        let value3 = unsafe {
+            let vertices: Vec<f32> = vec![
+                //Triangle 3
+                0.0, 0.3, 0.0, 
+                -0.3, 0.0, 0.0, 
+                0.3, 0.0, 0.0,
+            ];
+
+            let indices: Vec<u32> = vec![0, 1, 2, 3, 4, 5, 6, 7, 8];
+            setup_vao(&vertices, &indices)
+        
+            
+        };
+        
+
+        let value4 = unsafe {
+            let vertices: Vec<f32> = vec![
+                //Triangle 4
+                0.9, 0.9, 0.0, 
+                0.6, 0.9, 0.0,
+                0.6, 0.6, 0.0, 
+            ];
+
+            let indices: Vec<u32> = vec![0, 1, 2, 3, 4, 5, 6, 7, 8];
+            setup_vao(&vertices, &indices)
+        
+            
+        };
+
+        let value5 = unsafe {
+            let vertices: Vec<f32> = vec![
+                //Triangle 2
+            -0.1, -0.1, 0.0,
+            0.1, -0.4, 0.0, 
+            0.1, -0.1, 0.0, 
+            ];
+
+            let indices: Vec<u32> = vec![0, 1, 4, 3, 2, 5, 6, 7, 8];
+            setup_vao(&vertices, &indices)
+        
+            
+        };
+
+        let value6 = unsafe {
+            let vertices: Vec<f32> = vec![
+                //Triangle 2
+            0.6, -0.8, -1.2,
+            0.0, 0.4, 0.0, 
+            -0.8, -0.2, 1.2, 
+            ];
+
             let indices: Vec<u32> = vec![0, 1, 2, 3, 4, 5, 6, 7, 8];
             setup_vao(&vertices, &indices)
         
@@ -172,12 +248,25 @@ fn main() {
                 gl::Clear(gl::COLOR_BUFFER_BIT);
 
                 // Issue the necessary commands to draw your scene here
-                gl::BindVertexArray(value);
                 gl::UseProgram(shader.program_id);
+                /*
+                gl::BindVertexArray(value);
                 gl::DrawElements(gl::TRIANGLES, 3, gl::UNSIGNED_INT, ptr::null());
 
+                gl::BindVertexArray(value2);
+                gl::DrawElements(gl::TRIANGLES, 3, gl::UNSIGNED_INT, ptr::null());
 
+                gl::BindVertexArray(value3);
+                gl::DrawElements(gl::TRIANGLES, 3, gl::UNSIGNED_INT, ptr::null());
 
+                gl::BindVertexArray(value4);
+                gl::DrawElements(gl::TRIANGLES, 3, gl::UNSIGNED_INT, ptr::null());
+
+                gl::BindVertexArray(value5);
+                gl::DrawElements(gl::TRIANGLES, 3, gl::UNSIGNED_INT, ptr::null());
+*/
+                gl::BindVertexArray(value5);
+                gl::DrawElements(gl::TRIANGLES, 3, gl::UNSIGNED_INT, ptr::null());
                 
             }
 
