@@ -40,46 +40,38 @@ fn offset<T>(n: u32) -> *const c_void {
 }
 
 // == // Modify and complete the function below for the first task
+
+//This function sets up a vertex array object (VAO), it takes two arguments that is the data (vertices) and the indices (used to fill the index buffer to tell which vertices should be connected together) and it returns the VAO ID
 unsafe fn setup_vao(vertices: &Vec<f32>, indices: &Vec<u32>) -> u32 { 
-    let mut array: u32 = 0;
-    gl::GenVertexArrays(1, &mut array); 
-    gl::BindVertexArray(array);
+    let mut array: u32 = 0; //a pointer to a location where the generated VAO ID can be stored. since we only are allocating a single VAO I created this empty unsigned int
+    gl::GenVertexArrays(1, &mut array); //This will generate a VAO
+    gl::BindVertexArray(array); //This will bind the VAO
 
-    let mut array2: u32 = 0; 
-    gl::GenBuffers(1, &mut array2);  
-    gl::BindBuffer(gl::ARRAY_BUFFER, array2);
+    let mut bufferID: u32 = 0; //Here the ID of the buffer (VBO) will be stored
+    gl::GenBuffers(1, &mut bufferID); // This will genereate a buffer
+    gl::BindBuffer(gl::ARRAY_BUFFER, bufferID);// this will bind the buffer in the created earlier in last line
 
-    //float vertices[] = {1.0, 3.0, 2.0, 5.0, 4.0, 3.0, 2.0, 6.0, 3.0}; //TODO: this is C++ syntacs make to rust
-    gl::BufferData(gl::ARRAY_BUFFER, byte_size_of_array(&vertices), pointer_to_array(&vertices), gl::STATIC_DRAW);
+    gl::BufferData(gl::ARRAY_BUFFER, byte_size_of_array(&vertices), pointer_to_array(&vertices), gl::STATIC_DRAW); //Here we will fill the buffer with our data
     
 
-    gl::VertexAttribPointer(0, 3, gl::FLOAT, gl::FALSE, 0, ptr::null());
-    gl::EnableVertexAttribArray(0); //index is same as in previwes line
+    gl::VertexAttribPointer(0, 3, gl::FLOAT, gl::FALSE, 0, ptr::null()); //Here we define a format for our buffer (because we didnt tell OpenGL about our data, so it does not know if we passed x,y or x,y,z etc, here we tell it)
+    gl::EnableVertexAttribArray(0); //This will enable the pointer. index is same as in previwes line
 
 
+    //INDEX BUFFER (index buffer spesifies how the vertecies in databuffer should be combined together, else we wont know which points are connected and not)
+    let mut bufferID2: u32 = 0; //Soter the ID of the buffer
+    gl::GenBuffers(1, &mut bufferID2); //Generate buffer
+    gl::BindBuffer(gl::ELEMENT_ARRAY_BUFFER, bufferID2);// bind the buffer
 
-    //INDEX BUFFER (index buffer spesifies how the vertesies in databuffer should be combined together, else we wont know which points are connected and not)
-    let mut array3: u32 = 0; 
-    gl::GenBuffers(1, &mut array3);
-    gl::BindBuffer(gl::ELEMENT_ARRAY_BUFFER, array3);
-
-    //Integer indices[] = {1, 3, 2, 5, 4, 3, 2, 6, 3}; //TODO: this is C++ syntacs, make to rust code
-    gl::BufferData(gl::ELEMENT_ARRAY_BUFFER, byte_size_of_array(&indices), pointer_to_array(&indices), gl::STATIC_DRAW);
+    gl::BufferData(gl::ELEMENT_ARRAY_BUFFER, byte_size_of_array(&indices), pointer_to_array(&indices), gl::STATIC_DRAW);//Fill wil indices
 
 
-
-
-    
     //Find the max (for index (the first parameter) in function glVertexattribPointer)
     //int maxVertexAttribs;
     //glGetIntegerv(gl::MAX_VERTEX_ATTRIBS, &maxVertexAttribs);
     //printf("gl::MAX_VERTEX_ATTRIBS: %i\n", maxVertexAttribs);
 
-
-
-
-    array //return arrayID
-    //array;
+    array //At the end we return the VAO ID. We will use this ID to refer to the array whenever we want to do something with it
 } 
 
 fn main() {
@@ -119,6 +111,8 @@ fn main() {
         }
 
         // == // Set up your VAO here
+
+        //Here I setup the VAO. As mentioned earlier this returns the array ID which I have to use later to draw the primitive
         let value = unsafe {
             let vertices: Vec<f32> = vec![
                 //Triangle 1
@@ -181,13 +175,13 @@ fn main() {
 
         let value5 = unsafe {
             let vertices: Vec<f32> = vec![
-                //Triangle 2
+                //Triangle 5
             -0.1, -0.1, 0.0,
             0.1, -0.4, 0.0, 
             0.1, -0.1, 0.0, 
             ];
 
-            let indices: Vec<u32> = vec![0, 1, 4, 3, 2, 5, 6, 7, 8];
+            let indices: Vec<u32> = vec![1, 2, 3, 4, 5, 6, 7, 8, 0];
             setup_vao(&vertices, &indices)
         
             
@@ -195,7 +189,7 @@ fn main() {
 
         let value6 = unsafe {
             let vertices: Vec<f32> = vec![
-                //Triangle 2
+                //Triangle 6
             0.6, -0.8, -1.2,
             0.0, 0.4, 0.0, 
             -0.8, -0.2, 1.2, 
@@ -210,6 +204,10 @@ fn main() {
         // Basic usage of shader helper
         // The code below returns a shader object, which contains the field .program_id
         // The snippet is not enough to do the assignment, and will need to be modified (outside of just using the correct path)
+
+        //Here I load the shaders, the vertex shader and the fragment shader then they are linked.
+        //Just a note, for some reason my system sometimes tells me that the path is wrong, so I remove one of the dots or add on and it works, 
+        //now I am confused as both work sometimes, or does not work sometimes...
         let shader = unsafe{
             shader::ShaderBuilder::new().attach_file("../shaders/simple.vert").attach_file("../shaders/simple.frag").link()
         };
@@ -248,6 +246,8 @@ fn main() {
                 gl::Clear(gl::COLOR_BUFFER_BIT);
 
                 // Issue the necessary commands to draw your scene here
+
+                //Here I am using the program ID I get retuned from the shader object
                 gl::UseProgram(shader.program_id);
                 /*
                 gl::BindVertexArray(value);
@@ -265,7 +265,9 @@ fn main() {
                 gl::BindVertexArray(value5);
                 gl::DrawElements(gl::TRIANGLES, 3, gl::UNSIGNED_INT, ptr::null());
 */
-                gl::BindVertexArray(value5);
+
+                //Here I bind the vertex array and pass the ID of the VAO, then I issue a draw command to draw the primitive contained in the bound VAO
+                gl::BindVertexArray(value4);
                 gl::DrawElements(gl::TRIANGLES, 3, gl::UNSIGNED_INT, ptr::null());
                 
             }
