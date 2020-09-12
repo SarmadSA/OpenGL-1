@@ -68,9 +68,12 @@ unsafe fn setup_vao(vertices: &Vec<f32>, indices: &Vec<u32>, colors: &Vec<f32>) 
 
     let mut bufferID3: u32 = 0; 
     gl::GenBuffers(1, &mut bufferID3); //Generate buffer
-    gl::BindBuffer(gl::ARRAY_BUFFER, bufferID3);// bind the buffer
+    gl::BindBuffer(gl::ARRAY_BUFFER, bufferID3);// bind the buffer //TODO ARRAY_BUFFER? or other?
 
-    gl::BufferData(gl::ARRAY_BUFFER, byte_size_of_array(&colors), pointer_to_array(&colors), gl::STATIC_DRAW);//Fill with colors
+    gl::BufferData(gl::ARRAY_BUFFER, byte_size_of_array(&colors), pointer_to_array(&colors), gl::STATIC_DRAW);//Fill with colors //TODO ARRAY_BUFFER? or other?
+
+    gl::VertexAttribPointer(1, 4, gl::FLOAT, gl::FALSE, 0, ptr::null()); //Here we define a format for our buffer (because we didnt tell OpenGL about our data, so it does not know if we passed x,y or x,y,z etc, here we tell it)
+    gl::EnableVertexAttribArray(1); //This will enable the pointer. index is same as in previwes line
 
     //Find the max (for index (the first parameter) in function glVertexattribPointer)
     //int maxVertexAttribs;
@@ -119,7 +122,7 @@ fn main() {
         // == // Set up your VAO here
 
         //Here I setup the VAO. As mentioned earlier this returns the array ID which I have to use later to draw the primitive
-        let value = unsafe {
+      /*  let value = unsafe {
             let vertices: Vec<f32> = vec![
                 //Triangle 1
                 0.9, -0.9, 0.0, 
@@ -163,7 +166,7 @@ fn main() {
         
             
         };
-        
+        */
 
         let value4 = unsafe {
             let vertices: Vec<f32> = vec![
@@ -174,12 +177,13 @@ fn main() {
             ];
 
             let indices: Vec<u32> = vec![0, 1, 2, 3, 4, 5, 6, 7, 8];
-            setup_vao(&vertices, &indices)
+            let colors: Vec<f32> = vec![1.0, 0.5, 0.5, 1.0, 1.0, 0.5, 0.5, 1.0, 1.0, 0.5, 0.5, 1.0];
+            setup_vao(&vertices, &indices, &colors)
         
             
         };
 
-        let value5 = unsafe {
+       /* let value5 = unsafe {
             let vertices: Vec<f32> = vec![
                 //Triangle 5
             -0.1, -0.1, 0.0,
@@ -205,7 +209,7 @@ fn main() {
             setup_vao(&vertices, &indices)
         
             
-        };
+        };*/
 
         // Basic usage of shader helper
         // The code below returns a shader object, which contains the field .program_id
