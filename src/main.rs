@@ -206,10 +206,8 @@ fn main() {
         // The snippet is not enough to do the assignment, and will need to be modified (outside of just using the correct path)
 
         //Here I load the shaders, the vertex shader and the fragment shader then they are linked.
-        //Just a note, for some reason my system sometimes tells me that the path is wrong, so I remove one of the dots or add on and it works, 
-        //now I am confused as both work sometimes, or does not work sometimes...
         let shader = unsafe{
-            shader::ShaderBuilder::new().attach_file("../shaders/simple.vert").attach_file("../shaders/simple.frag").link()
+            shader::ShaderBuilder::new().attach_file("./shaders/simple.vert").attach_file("./shaders/simple.frag").link()
         };
 
         // Used to demonstrate keyboard handling -- feel free to remove
