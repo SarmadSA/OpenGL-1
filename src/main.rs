@@ -138,7 +138,7 @@ fn main() {
         
             
         };
-
+*/
         let value2 = unsafe {
             let vertices: Vec<f32> = vec![
                 //Triangle 2
@@ -148,7 +148,9 @@ fn main() {
             ];
 
             let indices: Vec<u32> = vec![0, 1, 2, 3, 4, 5, 6, 7, 8];
-            setup_vao(&vertices, &indices)
+            let colors: Vec<f32> = vec![0.2, 0.5, 0.1, 1.0, 0.2, 0.5, 0.1, 1.0, 1.0, 0.5, 0.5, 1.0];
+
+            setup_vao(&vertices, &indices, &colors)
         
             
         };
@@ -162,11 +164,13 @@ fn main() {
             ];
 
             let indices: Vec<u32> = vec![0, 1, 2, 3, 4, 5, 6, 7, 8];
-            setup_vao(&vertices, &indices)
+            let colors: Vec<f32> = vec![0.0, 0.0, 0.0, 1.0, 0.2, 0.5, 0.1, 1.0, 1.0, 0.1, 0.5, 1.0];
+
+            setup_vao(&vertices, &indices, &colors)
         
             
         };
-        */
+        
 
         let value4 = unsafe {
             let vertices: Vec<f32> = vec![
@@ -182,8 +186,8 @@ fn main() {
         
             
         };
-
-       /* let value5 = unsafe {
+/*
+        let value5 = unsafe {
             let vertices: Vec<f32> = vec![
                 //Triangle 5
             -0.1, -0.1, 0.0,
@@ -192,7 +196,8 @@ fn main() {
             ];
 
             let indices: Vec<u32> = vec![1, 2, 3, 4, 5, 6, 7, 8, 0];
-            setup_vao(&vertices, &indices)
+            let colors: Vec<f32> = vec![1.0, 0.5, 0.5, 1.0, 1.0, 0.5, 0.5, 1.0, 1.0, 0.5, 0.5, 1.0];
+            setup_vao(&vertices, &indices, &colors)
         
             
         };
@@ -209,7 +214,7 @@ fn main() {
             setup_vao(&vertices, &indices)
         
             
-        };*/
+        }; */
 
         // Basic usage of shader helper
         // The code below returns a shader object, which contains the field .program_id
@@ -263,16 +268,16 @@ fn main() {
 
                 gl::BindVertexArray(value2);
                 gl::DrawElements(gl::TRIANGLES, 3, gl::UNSIGNED_INT, ptr::null());
-
+*/
                 gl::BindVertexArray(value3);
                 gl::DrawElements(gl::TRIANGLES, 3, gl::UNSIGNED_INT, ptr::null());
 
-                gl::BindVertexArray(value4);
-                gl::DrawElements(gl::TRIANGLES, 3, gl::UNSIGNED_INT, ptr::null());
-
-                gl::BindVertexArray(value5);
+ /*               gl::BindVertexArray(value6);
                 gl::DrawElements(gl::TRIANGLES, 3, gl::UNSIGNED_INT, ptr::null());
 */
+                gl::BindVertexArray(value2);
+                gl::DrawElements(gl::TRIANGLES, 3, gl::UNSIGNED_INT, ptr::null());
+
 
                 //Here I bind the vertex array and pass the ID of the VAO, then I issue a draw command to draw the primitive contained in the bound VAO
                 gl::BindVertexArray(value4);
