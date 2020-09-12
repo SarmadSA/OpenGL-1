@@ -42,7 +42,7 @@ fn offset<T>(n: u32) -> *const c_void {
 // == // Modify and complete the function below for the first task
 
 //This function sets up a vertex array object (VAO), it takes two arguments that is the data (vertices) and the indices (used to fill the index buffer to tell which vertices should be connected together) and it returns the VAO ID
-unsafe fn setup_vao(vertices: &Vec<f32>, indices: &Vec<u32>) -> u32 { 
+unsafe fn setup_vao(vertices: &Vec<f32>, indices: &Vec<u32>, colors: &Vec<f32>) -> u32 { 
     let mut array: u32 = 0; //a pointer to a location where the generated VAO ID can be stored. since we only are allocating a single VAO I created this empty unsigned int
     gl::GenVertexArrays(1, &mut array); //This will generate a VAO
     gl::BindVertexArray(array); //This will bind the VAO
@@ -65,6 +65,12 @@ unsafe fn setup_vao(vertices: &Vec<f32>, indices: &Vec<u32>) -> u32 {
 
     gl::BufferData(gl::ELEMENT_ARRAY_BUFFER, byte_size_of_array(&indices), pointer_to_array(&indices), gl::STATIC_DRAW);//Fill wil indices
 
+
+    let mut bufferID3: u32 = 0; 
+    gl::GenBuffers(1, &mut bufferID3); //Generate buffer
+    gl::BindBuffer(gl::ARRAY_BUFFER, bufferID3);// bind the buffer
+
+    gl::BufferData(gl::ARRAY_BUFFER, byte_size_of_array(&colors), pointer_to_array(&colors), gl::STATIC_DRAW);//Fill with colors
 
     //Find the max (for index (the first parameter) in function glVertexattribPointer)
     //int maxVertexAttribs;
