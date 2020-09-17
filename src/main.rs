@@ -261,7 +261,7 @@ let value = unsafe {
                 gl::UniformMatrix4fv(3, 1, gl::FALSE, transformationCombo.as_ptr());
 
                 gl::DrawElements(gl::TRIANGLES, 9, gl::UNSIGNED_INT, ptr::null());
-                 
+
             }
 
             context.swap_buffers().unwrap();
@@ -320,6 +320,20 @@ let value = unsafe {
                     Escape => {
                         *control_flow = ControlFlow::Exit;
                     },
+                    
+                    Space => {
+                        print!("Space pressed!!!");
+
+                    },
+
+                    D => {
+                        print!("D pressed!!!");
+                    },
+                    
+                    KEY_D => {
+                        print!("Some other key pressed!!!");
+                    },
+
                     _ => { }
                 }
             },
