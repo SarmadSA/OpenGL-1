@@ -111,6 +111,8 @@ fn main() {
 
         // Set up openGL
         unsafe {
+            gl::Enable(gl::DEPTH_TEST);
+            gl::DepthFunc(gl::LESS);
             gl::Enable(gl::CULL_FACE);
             gl::Disable(gl::MULTISAMPLE);
             gl::Enable(gl::BLEND);
@@ -191,7 +193,8 @@ fn main() {
 
             unsafe {
                 gl::ClearColor(0.163, 0.163, 0.163, 1.0);
-                gl::Clear(gl::COLOR_BUFFER_BIT);
+                gl::Clear(gl::COLOR_BUFFER_BIT | gl::DEPTH_BUFFER_BIT);
+
 
                 // Issue the necessary commands to draw your scene here
 
@@ -201,8 +204,12 @@ fn main() {
                 
                 let scaling: glm::Mat4 = glm::scaling(&glm::vec3(1.0,1.0,1.0));
                 let identity: glm::Mat4 = glm::identity(); 
+                let translation: glm::Mat4 = glm::translation(&glm::vec3(0.0,0.0,-5.0));
+                let projection: glm::Mat4 = glm::perspective(0.75, 0.75, 1.0, 100.0);
 
-                gl::UniformMatrix4fv(3, 1, gl::FALSE, scaling.as_ptr());
+                let transformationCombo: glm::Mat4 = projection * translation;
+
+                gl::UniformMatrix4fv(3, 1, gl::FALSE, transformationCombo.as_ptr());
 
                 gl::DrawElements(gl::TRIANGLES, 9, gl::UNSIGNED_INT, ptr::null());
                 
