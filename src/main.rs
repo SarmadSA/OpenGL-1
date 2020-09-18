@@ -263,11 +263,11 @@ fn main() {
                             _arbitrary_number -= delta_time;
                             rot_x += delta_time;
                         },
-                        VirtualKeyCode::J => {
+                        VirtualKeyCode::L => {
                             _arbitrary_number -= delta_time;
                             rot_y -= delta_time;
                         },
-                        VirtualKeyCode::L => {
+                        VirtualKeyCode::J => {
                             _arbitrary_number -= delta_time;
                             rot_y += delta_time;
                         },
