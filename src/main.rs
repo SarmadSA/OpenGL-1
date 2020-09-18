@@ -207,9 +207,13 @@ fn main() {
 
         // Used to demonstrate keyboard handling -- feel free to remove
         let mut _arbitrary_number = 0.0;
+
+        //Create needed variables for translation (camera movement)
         let mut _x = 0.0;
         let mut _y = 0.0;
         let mut _z = -3.0;
+
+        //Create needed variables for rotations (camera rotations)
         let mut rot_x = 0.0;
         let mut rot_y = 0.0;
 
@@ -231,6 +235,8 @@ fn main() {
             if let Ok(keys) = pressed_keys.lock() {
                 for key in keys.iter() {
                     match key {
+
+                         /*Use WSDAQE for camera movements*/
                         VirtualKeyCode::W => {
                             _z += delta_time;
                         },
@@ -249,6 +255,8 @@ fn main() {
                         VirtualKeyCode::D => {
                             _x -= delta_time;
                         },
+
+                        /* Use arrows for camera rotations*/ 
                         VirtualKeyCode::Down => {
                             rot_x -= delta_time;
                         },
@@ -288,23 +296,22 @@ fn main() {
                 //let scaling: glm::Mat4 = glm::scaling(&glm::vec3(1.0,1.0,1.0));
 
                 //Translation
-                let translation: glm::Mat4 = glm::translation(&glm::vec3(_x,_y,_z));
-                let transposeTranslation: glm::Mat4 = glm::transpose(&translation);
+                let translation: glm::Mat4 = glm::translation(&glm::vec3(_x,_y,_z)); //Translate, this gives us the camera movements (up, down, left, right, forward and backward)
+                let transposeTranslation: glm::Mat4 = glm::transpose(&translation); //Transpose the translation matrix
 
                 //Rotation
-                let rotationX: glm::Mat4 = glm::rotation(rot_x, &glm::vec3(1.0,0.0,0.0)); 
-                let rotationY: glm::Mat4 = glm::rotation(rot_y, &glm::vec3(0.0,1.0,0.0));
+                let rotationX: glm::Mat4 = glm::rotation(rot_x, &glm::vec3(1.0,0.0,0.0)); //Rotate about the x-axis 
+                let rotationY: glm::Mat4 = glm::rotation(rot_y, &glm::vec3(0.0,1.0,0.0)); //Rotate about the y-axis
+                let transposeRotationX: glm::Mat4 = glm::transpose(&rotationX); //Transpose rotationX matrix
+                let transposeRotationY: glm::Mat4 = glm::transpose(&rotationY); //Transpose rotationY matrix 
 
-                let transposeRotationX: glm::Mat4 = glm::transpose(&rotationX);
-                let transposeRotationY: glm::Mat4 = glm::transpose(&rotationY);
-
-                
-                let transformationCombo: glm::Mat4 = transposeRotationX * transposeRotationY * transposeTranslation *  projection * identity ;
+                //Produce the tranformation matrics from individual transformations                
+                let transformationCombo: glm::Mat4 = transposeRotationX * transposeRotationY * transposeTranslation *  projection * identity; //Multiply to get the transformation matrix which is then passed to the vertex shader to apply the transformation
 
 
-                gl::UniformMatrix4fv(3, 1, gl::FALSE, transformationCombo.as_ptr());
+                gl::UniformMatrix4fv(3, 1, gl::FALSE, transformationCombo.as_ptr()); //Pass the transformation matrix to the vertex shader at location = 3
 
-                gl::DrawElements(gl::TRIANGLES, 9, gl::UNSIGNED_INT, ptr::null());
+                gl::DrawElements(gl::TRIANGLES, 9, gl::UNSIGNED_INT, ptr::null()); //Draw 3 triangles
 
             }
 
