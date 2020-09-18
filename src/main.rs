@@ -135,7 +135,7 @@ fn main() {
         // == // Set up your VAO here
 
     //Here I setup the VAO. As mentioned earlier this returns the array ID which I have to use later to draw the primitive
-let value = unsafe {
+/*let value = unsafe {
     let vertices: Vec<f32> = vec![
         //Triangle 
         -0.4, -0.3, 0.6,
@@ -164,8 +164,8 @@ let value = unsafe {
     setup_vao(&vertices, &indices, &colors)    
 };
 
-
-/*     
+*/
+     
         let value = unsafe {
     let vertices: Vec<f32> = vec![
         //Triangle 
@@ -194,7 +194,7 @@ let value = unsafe {
             ];
         setup_vao(&vertices, &indices, &colors)    
     };
-    */
+    
 
     // Basic usage of shader helper
     // The code below returns a shader object, which contains the field .program_id
@@ -207,9 +207,17 @@ let value = unsafe {
 
         // Used to demonstrate keyboard handling -- feel free to remove
         let mut _arbitrary_number = 0.0;
+        let mut _x = 0.0;
+        let mut _y = 0.0;
+        let mut _z = -3.0;
 
         let first_frame_time = std::time::Instant::now();
         let mut last_frame_time = first_frame_time;
+
+        let identity: glm::Mat4 = glm::identity(); 
+        let projection: glm::Mat4 = glm::perspective(1.00, 1.00, 1.0, 100.0);
+
+
         // The main rendering loop
         loop {
             let now = std::time::Instant::now();
@@ -221,14 +229,32 @@ let value = unsafe {
             if let Ok(keys) = pressed_keys.lock() {
                 for key in keys.iter() {
                     match key {
-                        VirtualKeyCode::A => {
+                        VirtualKeyCode::W => {
                             _arbitrary_number += delta_time;
+                            _z += delta_time;
+                        },
+                        VirtualKeyCode::S => {
+                            _arbitrary_number += delta_time;
+                            _z -= delta_time;
+                        },
+                        VirtualKeyCode::E => {
+                            _arbitrary_number -= delta_time;
+                            _y += delta_time;
+                        },
+                        VirtualKeyCode::Q => {
+                            _arbitrary_number -= delta_time;
+                            _y -= delta_time;
+                        },
+                        VirtualKeyCode::A => {
+                            _arbitrary_number -= delta_time;
+                            _x += delta_time;
                         },
                         VirtualKeyCode::D => {
                             _arbitrary_number -= delta_time;
+                            _x -= delta_time;
                         },
 
-
+                        
                         _ => { }
                     }
                 }
@@ -252,11 +278,13 @@ let value = unsafe {
 
                 
                 let scaling: glm::Mat4 = glm::scaling(&glm::vec3(1.0,1.0,1.0));
-                let identity: glm::Mat4 = glm::identity(); 
-                let translation: glm::Mat4 = glm::translation(&glm::vec3(0.0,0.0,-5.0));
-                let projection: glm::Mat4 = glm::perspective(0.75, 0.75, 1.0, 100.0);
+                //let identity: glm::Mat4 = glm::identity(); 
+                let translation: glm::Mat4 = glm::translation(&glm::vec3(_x,_y,_z));
+                //let projection: glm::Mat4 = glm::perspective(0.75, 0.75, 1.0, 100.0);
+                let transposeTranslation: glm::Mat4 = glm::transpose(&translation);
+                
+                let transformationCombo: glm::Mat4 = transposeTranslation *  projection * identity ;
 
-                let transformationCombo: glm::Mat4 = projection * translation;
 
                 gl::UniformMatrix4fv(3, 1, gl::FALSE, transformationCombo.as_ptr());
 
@@ -319,19 +347,6 @@ let value = unsafe {
                 match keycode {
                     Escape => {
                         *control_flow = ControlFlow::Exit;
-                    },
-                    
-                    Space => {
-                        print!("Space pressed!!!");
-
-                    },
-
-                    D => {
-                        print!("D pressed!!!");
-                    },
-                    
-                    KEY_D => {
-                        print!("Some other key pressed!!!");
                     },
 
                     _ => { }
