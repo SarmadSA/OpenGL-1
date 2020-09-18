@@ -309,7 +309,7 @@ fn main() {
                 let transformationCombo: glm::Mat4 = transposeRotationX * transposeRotationY * transposeTranslation *  projection * identity; //Multiply to get the transformation matrix which is then passed to the vertex shader to apply the transformation
 
 
-                gl::UniformMatrix4fv(3, 1, gl::FALSE, transformationCombo.as_ptr()); //Pass the transformation matrix to the vertex shader at location = 3
+                gl::UniformMatrix4fv(3, 1, gl::FALSE, transformationCombo.as_ptr()); //Pass the transformation matrix to the vertex shader at location = 3 as a uniform variable
 
                 gl::DrawElements(gl::TRIANGLES, 9, gl::UNSIGNED_INT, ptr::null()); //Draw 3 triangles
 
