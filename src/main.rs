@@ -210,8 +210,8 @@ fn main() {
         let mut _x = 0.0;
         let mut _y = 0.0;
         let mut _z = -3.0;
-        let mut rot_x = -3.0;
-        let mut rot_y = -3.0;
+        let mut rot_x = 0.0;
+        let mut rot_y = 0.0;
 
         let first_frame_time = std::time::Instant::now();
         let mut last_frame_time = first_frame_time;
@@ -232,43 +232,33 @@ fn main() {
                 for key in keys.iter() {
                     match key {
                         VirtualKeyCode::W => {
-                            _arbitrary_number += delta_time;
                             _z += delta_time;
                         },
                         VirtualKeyCode::S => {
-                            _arbitrary_number += delta_time;
                             _z -= delta_time;
                         },
                         VirtualKeyCode::E => {
-                            _arbitrary_number -= delta_time;
                             _y += delta_time;
                         },
                         VirtualKeyCode::Q => {
-                            _arbitrary_number -= delta_time;
                             _y -= delta_time;
                         },
                         VirtualKeyCode::A => {
-                            _arbitrary_number -= delta_time;
                             _x += delta_time;
                         },
                         VirtualKeyCode::D => {
-                            _arbitrary_number -= delta_time;
                             _x -= delta_time;
                         },
-                        VirtualKeyCode::I => {
-                            _arbitrary_number -= delta_time;
+                        VirtualKeyCode::Down => {
                             rot_x -= delta_time;
                         },
-                        VirtualKeyCode::K => {
-                            _arbitrary_number -= delta_time;
+                        VirtualKeyCode::Up => {
                             rot_x += delta_time;
                         },
-                        VirtualKeyCode::L => {
-                            _arbitrary_number -= delta_time;
+                        VirtualKeyCode::Right => {
                             rot_y -= delta_time;
                         },
-                        VirtualKeyCode::J => {
-                            _arbitrary_number -= delta_time;
+                        VirtualKeyCode::Left => {
                             rot_y += delta_time;
                         },
 
@@ -302,8 +292,8 @@ fn main() {
                 let transposeTranslation: glm::Mat4 = glm::transpose(&translation);
 
                 //Rotation
-                let rotationX: glm::Mat4 = glm::rotation(rot_x , &glm::vec3(1.0,0.0,0.0));
-                let rotationY: glm::Mat4 = glm::rotation(rot_y , &glm::vec3(0.0,1.0,0.0));
+                let rotationX: glm::Mat4 = glm::rotation(rot_x, &glm::vec3(1.0,0.0,0.0)); 
+                let rotationY: glm::Mat4 = glm::rotation(rot_y, &glm::vec3(0.0,1.0,0.0));
 
                 let transposeRotationX: glm::Mat4 = glm::transpose(&rotationX);
                 let transposeRotationY: glm::Mat4 = glm::transpose(&rotationY);
