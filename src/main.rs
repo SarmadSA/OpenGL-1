@@ -296,7 +296,7 @@ fn main() {
                 //let scaling: glm::Mat4 = glm::scaling(&glm::vec3(1.0,1.0,1.0));
 
                 //Translation
-                let translation: glm::Mat4 = glm::translation(&glm::vec3(_x,_y,_z)); //Translate, this gives us the camera movements (up, down, left, right, forward and backward)
+                let translation: glm::Mat4 = glm::translation(&glm::vec3(_x,_y,_z)); //Translate, this gives us the camera movements (upward, downward, sideways (left and right), forward and backward)
                 let transposeTranslation: glm::Mat4 = glm::transpose(&translation); //Transpose the translation matrix
 
                 //Rotation
