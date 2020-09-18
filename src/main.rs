@@ -236,7 +236,7 @@ fn main() {
                 for key in keys.iter() {
                     match key {
 
-                         /*Use WSDAQE for camera movements*/
+                         /*Use WASDEQ for camera movements*/
                         VirtualKeyCode::W => {
                             _z += delta_time;
                         },
