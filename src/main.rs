@@ -210,6 +210,8 @@ fn main() {
         let mut _x = 0.0;
         let mut _y = 0.0;
         let mut _z = -3.0;
+        let mut rot_x = -3.0;
+        let mut rot_y = -3.0;
 
         let first_frame_time = std::time::Instant::now();
         let mut last_frame_time = first_frame_time;
@@ -253,8 +255,24 @@ fn main() {
                             _arbitrary_number -= delta_time;
                             _x -= delta_time;
                         },
+                        VirtualKeyCode::I => {
+                            _arbitrary_number -= delta_time;
+                            rot_x -= delta_time;
+                        },
+                        VirtualKeyCode::K => {
+                            _arbitrary_number -= delta_time;
+                            rot_x += delta_time;
+                        },
+                        VirtualKeyCode::J => {
+                            _arbitrary_number -= delta_time;
+                            rot_y -= delta_time;
+                        },
+                        VirtualKeyCode::L => {
+                            _arbitrary_number -= delta_time;
+                            rot_y += delta_time;
+                        },
 
-                        
+
                         _ => { }
                     }
                 }
@@ -277,13 +295,21 @@ fn main() {
                 gl::UseProgram(shader.program_id);
 
                 
-                let scaling: glm::Mat4 = glm::scaling(&glm::vec3(1.0,1.0,1.0));
-                //let identity: glm::Mat4 = glm::identity(); 
+                //let scaling: glm::Mat4 = glm::scaling(&glm::vec3(1.0,1.0,1.0));
+
+                //Translation
                 let translation: glm::Mat4 = glm::translation(&glm::vec3(_x,_y,_z));
-                //let projection: glm::Mat4 = glm::perspective(0.75, 0.75, 1.0, 100.0);
                 let transposeTranslation: glm::Mat4 = glm::transpose(&translation);
+
+                //Rotation
+                let rotationX: glm::Mat4 = glm::rotation(rot_x , &glm::vec3(1.0,0.0,0.0));
+                let rotationY: glm::Mat4 = glm::rotation(rot_y , &glm::vec3(0.0,1.0,0.0));
+
+                let transposeRotationX: glm::Mat4 = glm::transpose(&rotationX);
+                let transposeRotationY: glm::Mat4 = glm::transpose(&rotationY);
+
                 
-                let transformationCombo: glm::Mat4 = transposeTranslation *  projection * identity ;
+                let transformationCombo: glm::Mat4 = transposeRotationX * transposeRotationY * transposeTranslation *  projection * identity ;
 
 
                 gl::UniformMatrix4fv(3, 1, gl::FALSE, transformationCombo.as_ptr());
