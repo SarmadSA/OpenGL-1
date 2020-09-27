@@ -41,7 +41,7 @@ fn offset<T>(n: u32) -> *const c_void {
 
 // == // Modify and complete the function below for the first task
 //This function sets up a vertex array object (VAO), it takes two arguments that is the data (vertices) and the indices (used to fill the index buffer to tell which vertices should be connected together) and it returns the VAO ID
-unsafe fn setup_vao(vertices: &Vec<f32>, indices: &Vec<u32>, colors: &Vec<f32>) -> u32 { 
+unsafe fn setup_vao(vertices: &Vec<f32>, indices: &Vec<u32>, colors: &Vec<f32>, normals: &Vec<f32>) -> u32 { 
     let mut array: u32 = 0; //a pointer to a location where the generated VAO ID can be stored. since we only are allocating a single VAO I created this empty unsigned int
     gl::GenVertexArrays(1, &mut array); //This will generate a VAO
     gl::BindVertexArray(array); //This will bind the VAO
@@ -49,10 +49,7 @@ unsafe fn setup_vao(vertices: &Vec<f32>, indices: &Vec<u32>, colors: &Vec<f32>) 
     let mut bufferID: u32 = 0; //Here the ID of the buffer (VBO) will be stored
     gl::GenBuffers(1, &mut bufferID); // This will genereate a buffer
     gl::BindBuffer(gl::ARRAY_BUFFER, bufferID);// this will bind the buffer in the created earlier in last line
-
     gl::BufferData(gl::ARRAY_BUFFER, byte_size_of_array(&vertices), pointer_to_array(&vertices), gl::STATIC_DRAW); //Here we will fill the buffer with our data
-    
-
     gl::VertexAttribPointer(0, 3, gl::FLOAT, gl::FALSE, 0, ptr::null()); //Here we define a format for our buffer (because we didnt tell OpenGL about our data, so it does not know if we passed x,y or x,y,z etc, here we tell it)
     gl::EnableVertexAttribArray(0); //This will enable the pointer. index is same as in previwes line
 
@@ -61,18 +58,25 @@ unsafe fn setup_vao(vertices: &Vec<f32>, indices: &Vec<u32>, colors: &Vec<f32>) 
     let mut bufferID2: u32 = 0; //Soter the ID of the buffer
     gl::GenBuffers(1, &mut bufferID2); //Generate buffer
     gl::BindBuffer(gl::ELEMENT_ARRAY_BUFFER, bufferID2);// bind the buffer
-
     gl::BufferData(gl::ELEMENT_ARRAY_BUFFER, byte_size_of_array(&indices), pointer_to_array(&indices), gl::STATIC_DRAW);//Fill wil indices
 
 
+    //Color
     let mut bufferID3: u32 = 0; 
     gl::GenBuffers(1, &mut bufferID3); //Generate buffer
-    gl::BindBuffer(gl::ARRAY_BUFFER, bufferID3);// bind the buffer //TODO ARRAY_BUFFER? or other?
-
-    gl::BufferData(gl::ARRAY_BUFFER, byte_size_of_array(&colors), pointer_to_array(&colors), gl::STATIC_DRAW);//Fill with colors //TODO ARRAY_BUFFER? or other?
-
+    gl::BindBuffer(gl::ARRAY_BUFFER, bufferID3);// bind the buffer
+    gl::BufferData(gl::ARRAY_BUFFER, byte_size_of_array(&colors), pointer_to_array(&colors), gl::STATIC_DRAW);//Fill with colors
     gl::VertexAttribPointer(1, 4, gl::FLOAT, gl::FALSE, 0, ptr::null()); //Here we define a format for our buffer (because we didnt tell OpenGL about our data, so it does not know if we passed x,y or x,y,z etc, here we tell it)
-    gl::EnableVertexAttribArray(1); //This will enable the pointer. index is same as in previwes line
+    gl::EnableVertexAttribArray(1); //This will enable the pointer. index is same as in previous line
+
+
+    //Normal
+    let mut bufferID4: u32 = 0; 
+    gl::GenBuffers(1, &mut bufferID4); //Generate buffer
+    gl::BindBuffer(gl::ARRAY_BUFFER, bufferID4);// bind the buffer
+    gl::BufferData(gl::ARRAY_BUFFER, byte_size_of_array(&normals), pointer_to_array(&normals), gl::STATIC_DRAW);//Fill with normals
+    gl::VertexAttribPointer(2, 3, gl::FLOAT, gl::FALSE, 0, ptr::null()); //Here we define a format for our buffer (because we didnt tell OpenGL about our data, so it does not know if we passed x,y or x,y,z etc, here we tell it)
+    gl::EnableVertexAttribArray(2); //This will enable the pointer. index is same as in previous line
 
     //Find the max (for index (the first parameter) in function glVertexattribPointer)
     //int maxVertexAttribs;
@@ -141,7 +145,8 @@ fn main() {
         let vertices: Vec<f32> = mesh.vertices;
         let indices: Vec<u32> = mesh.indices;
         let colors: Vec<f32> = mesh.colors;
-        setup_vao(&vertices, &indices, &colors)    
+        let normals: Vec<f32> = mesh.normals;
+        setup_vao(&vertices, &indices, &colors, &normals)    
     };
     
 
