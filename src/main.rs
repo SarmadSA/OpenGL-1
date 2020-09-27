@@ -184,6 +184,8 @@ fn main() {
             let elapsed = now.duration_since(first_frame_time).as_secs_f32();
             let delta_time = now.duration_since(last_frame_time).as_secs_f32();
             last_frame_time = now;
+            
+            let speed = 1.0;
 
             // Handle keyboard input
             if let Ok(keys) = pressed_keys.lock() {
@@ -192,22 +194,22 @@ fn main() {
 
                          /*Use WASDEQ for camera movements*/
                         VirtualKeyCode::W => {
-                            _z += delta_time;
+                            _z += speed;
                         },
                         VirtualKeyCode::S => {
-                            _z -= delta_time;
+                            _z -= speed;
                         },
                         VirtualKeyCode::E => {
-                            _y += delta_time;
+                            _y += speed;
                         },
                         VirtualKeyCode::Q => {
-                            _y -= delta_time;
+                            _y -= speed;
                         },
                         VirtualKeyCode::A => {
-                            _x += delta_time;
+                            _x += speed;
                         },
                         VirtualKeyCode::D => {
-                            _x -= delta_time;
+                            _x -= speed;
                         },
 
                         /* Use arrows for camera rotations*/ 
