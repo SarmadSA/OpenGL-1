@@ -5,6 +5,7 @@ use std::sync::{Mutex, Arc, RwLock};
 
 mod shader;
 mod util;
+mod mesh;
 
 use glutin::event::{Event, WindowEvent, DeviceEvent, KeyboardInput, ElementState::{Pressed, Released}, VirtualKeyCode::{self, *}};
 use glutin::event_loop::ControlFlow;
@@ -132,36 +133,14 @@ fn main() {
             println!("GLSL\t: {}", util::get_gl_string(gl::SHADING_LANGUAGE_VERSION));
         }
 
-        // == // Set up your VAO here
+    //Here I load the lunarsurface.obj
+    let mesh = mesh::Terrain::load("./resources/lunarsurface.obj"); //Load the lunar surface
 
     //Here I setup the VAO. As mentioned earlier this returns the array ID which I have to use later to draw the primitive     
-    
     let value = unsafe {
-        let vertices: Vec<f32> = vec![
-            //Triangle 
-            0.0, 0.2, 0.7,
-            -0.2, -0.2, 0.7,
-            0.2,  -0.2, 0.7,
-            0.0, -0.2, 0.8,
-            0.4, -0.2, 0.8,
-            0.2,  0.2, 0.8,
-            0.1, 0.0, 0.9,
-            -0.2, -0.4, 0.9,
-            0.4, -0.4, 0.9,
-    ];
-
-        let indices: Vec<u32> = vec![0, 1, 2, 3, 4, 5, 6, 7, 8];
-        let colors: Vec<f32> = vec![
-            0.0, 0.0, 1.0, 0.35,
-            0.0, 0.0, 1.0, 0.35,
-            0.0, 0.0, 1.0, 0.35,
-            0.0, 1.0, 0.0, 0.35,
-            0.0, 1.0, 0.0, 0.35,
-            0.0, 1.0, 0.0, 0.35,
-            1.0, 0.0, 0.0, 0.35,
-            1.0, 0.0, 0.0, 0.35,
-            1.0, 0.0, 0.0, 0.35,
-            ];
+        let vertices: Vec<f32> = mesh.vertices;
+        let indices: Vec<u32> = mesh.indices;
+        let colors: Vec<f32> = mesh.colors;
         setup_vao(&vertices, &indices, &colors)    
     };
     
@@ -190,8 +169,8 @@ fn main() {
         let first_frame_time = std::time::Instant::now();
         let mut last_frame_time = first_frame_time;
 
-        let identity: glm::Mat4 = glm::identity(); 
-        let projection: glm::Mat4 = glm::perspective(1.00, 1.00, 1.0, 100.0);
+        let identity: glm::Mat4 = glm::identity(); //Create identitiy matrix
+        let projection: glm::Mat4 = glm::perspective(1.00, 1.00, 1.0, 1000.0); //Projection
 
 
         // The main rendering loop
@@ -281,7 +260,7 @@ fn main() {
 
                 gl::UniformMatrix4fv(3, 1, gl::FALSE, transformationCombo.as_ptr()); //Pass the transformation matrix to the vertex shader at location = 3 as a uniform variable
 
-                gl::DrawElements(gl::TRIANGLES, 9, gl::UNSIGNED_INT, ptr::null()); //Draw 3 triangles
+                gl::DrawElements(gl::TRIANGLES, mesh.index_count, gl::UNSIGNED_INT, ptr::null()); //Draw triangles
 
             }
 
