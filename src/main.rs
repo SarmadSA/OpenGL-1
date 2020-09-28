@@ -6,6 +6,7 @@ use std::sync::{Mutex, Arc, RwLock};
 mod shader;
 mod util;
 mod mesh;
+mod scene_graph;
 
 use glutin::event::{Event, WindowEvent, DeviceEvent, KeyboardInput, ElementState::{Pressed, Released}, VirtualKeyCode::{self, *}};
 use glutin::event_loop::ControlFlow;
@@ -194,6 +195,28 @@ fn main() {
     let shader = unsafe{
         shader::ShaderBuilder::new().attach_file("./shaders/simple.vert").attach_file("./shaders/simple.frag").link()
     };
+
+    //Here I create a scene graph
+    let mut root_scene_node = scene_graph::SceneNode::new();//Generate a root scene node
+    let mut terrain_scene_node = scene_graph::SceneNode::from_vao(value, terrain_mesh.index_count);//Generate a scene node for the terrain
+    let mut heli_body_node = scene_graph::SceneNode::from_vao(heli_body_vao, heli_mesh.body.index_count);//Generate a scene node for the helicopter body
+    let mut heli_main_rotor_node = scene_graph::SceneNode::from_vao(heli_main_rotor_vao, heli_mesh.main_rotor.index_count);//Generate a scene node for the helicopter body
+    let mut heli_tail_rotor_node = scene_graph::SceneNode::from_vao(heli_tail_rotor_vao, heli_mesh.tail_rotor.index_count);//Generate a scene node for the helicopter body
+    let mut heli_door_node = scene_graph::SceneNode::from_vao(heli_door_vao, heli_mesh.door.index_count);//Generate a scene node for the helicopter body
+
+    //Initilize the values in the scene node data structure to initial values
+    terrain_scene_node.position = glm::vec3(1.0, 0.0, 1.0); //set position of terrain
+    heli_body_node.position = glm::vec3(1.0, 0.0, 1.0); //Set position of helicopter body
+
+    heli_body_node.add_child(&heli_main_rotor_node); //Add main rotor as a child node to helicopter
+    heli_body_node.add_child(&heli_tail_rotor_node); //Add tail rotor as a child node to helicopter
+    heli_body_node.add_child(&heli_door_node); //Add door as a child node to helicopter
+    terrain_scene_node.add_child(&heli_body_node); //Add helicopter body as a child node to terrain node
+    root_scene_node.add_child(&terrain_scene_node); //Add terrain scene node to the root node
+
+    root_scene_node.print();
+    terrain_scene_node.print();
+    heli_body_node.print();
 
         // Used to demonstrate keyboard handling -- feel free to remove
         let mut _arbitrary_number = 0.0;
