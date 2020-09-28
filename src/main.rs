@@ -138,18 +138,54 @@ fn main() {
         }
 
     //Here I load the lunarsurface.obj
-    let mesh = mesh::Terrain::load("./resources/lunarsurface.obj"); //Load the lunar surface
+    let terrain_mesh = mesh::Terrain::load("./resources/lunarsurface.obj"); //Load the lunar surface
 
     //Here I setup the VAO. As mentioned earlier this returns the array ID which I have to use later to draw the primitive     
     let value = unsafe {
-        let vertices: Vec<f32> = mesh.vertices;
-        let indices: Vec<u32> = mesh.indices;
-        let colors: Vec<f32> = mesh.colors;
-        let normals: Vec<f32> = mesh.normals;
+        let vertices: Vec<f32> = terrain_mesh.vertices;
+        let indices: Vec<u32> = terrain_mesh.indices;
+        let colors: Vec<f32> = terrain_mesh.colors;
+        let normals: Vec<f32> = terrain_mesh.normals;
+        setup_vao(&vertices, &indices, &colors, &normals)    
+    };
+
+
+    let heli_mesh = mesh::Helicopter::load("./resources/helicopter.obj"); //Load helicopter
+
+    let heli_body_vao = unsafe {
+        let vertices: Vec<f32> = heli_mesh.body.vertices;
+        let indices: Vec<u32> = heli_mesh.body.indices;
+        let colors: Vec<f32> = heli_mesh.body.colors;
+        let normals: Vec<f32> = heli_mesh.body.normals;
+        setup_vao(&vertices, &indices, &colors, &normals)    
+    };
+
+
+    let heli_main_rotor_vao = unsafe {
+        let vertices: Vec<f32> = heli_mesh.main_rotor.vertices;
+        let indices: Vec<u32> = heli_mesh.main_rotor.indices;
+        let colors: Vec<f32> = heli_mesh.main_rotor.colors;
+        let normals: Vec<f32> = heli_mesh.main_rotor.normals;
+        setup_vao(&vertices, &indices, &colors, &normals)    
+    };
+
+    let heli_tail_rotor_vao = unsafe {
+        let vertices: Vec<f32> = heli_mesh.tail_rotor.vertices;
+        let indices: Vec<u32> = heli_mesh.tail_rotor.indices;
+        let colors: Vec<f32> = heli_mesh.tail_rotor.colors;
+        let normals: Vec<f32> = heli_mesh.tail_rotor.normals;
+        setup_vao(&vertices, &indices, &colors, &normals)    
+    };
+
+
+    let heli_door_vao = unsafe {
+        let vertices: Vec<f32> = heli_mesh.door.vertices;
+        let indices: Vec<u32> = heli_mesh.door.indices;
+        let colors: Vec<f32> = heli_mesh.door.colors;
+        let normals: Vec<f32> = heli_mesh.door.normals;
         setup_vao(&vertices, &indices, &colors, &normals)    
     };
     
-
     // Basic usage of shader helper
     // The code below returns a shader object, which contains the field .program_id
     // The snippet is not enough to do the assignment, and will need to be modified (outside of just using the correct path)
@@ -248,7 +284,7 @@ fn main() {
                 //Here I am using the program ID I get retuned from the shader object
                 gl::UseProgram(shader.program_id);
 
-                
+
                 //let scaling: glm::Mat4 = glm::scaling(&glm::vec3(1.0,1.0,1.0));
 
                 //Translation
@@ -266,9 +302,21 @@ fn main() {
 
 
                 gl::UniformMatrix4fv(3, 1, gl::FALSE, transformationCombo.as_ptr()); //Pass the transformation matrix to the vertex shader at location = 3 as a uniform variable
+                
+                gl::BindVertexArray(value);
+                gl::DrawElements(gl::TRIANGLES, terrain_mesh.index_count, gl::UNSIGNED_INT, ptr::null()); //Draw terrain
 
-                gl::DrawElements(gl::TRIANGLES, mesh.index_count, gl::UNSIGNED_INT, ptr::null()); //Draw triangles
+                gl::BindVertexArray(heli_body_vao);
+                gl::DrawElements(gl::TRIANGLES, heli_mesh.body.index_count, gl::UNSIGNED_INT, ptr::null()); //Draw helicopter body
 
+                gl::BindVertexArray(heli_main_rotor_vao);
+                gl::DrawElements(gl::TRIANGLES, heli_mesh.main_rotor.index_count, gl::UNSIGNED_INT, ptr::null()); //Draw helicopter main rotor
+
+                gl::BindVertexArray(heli_tail_rotor_vao);
+                gl::DrawElements(gl::TRIANGLES, heli_mesh.tail_rotor.index_count, gl::UNSIGNED_INT, ptr::null()); //Draw helicopter tail rotor
+
+                gl::BindVertexArray(heli_door_vao);
+                gl::DrawElements(gl::TRIANGLES, heli_mesh.door.index_count, gl::UNSIGNED_INT, ptr::null()); //Draw helicopter door
             }
 
             context.swap_buffers().unwrap();
