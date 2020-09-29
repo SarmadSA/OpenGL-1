@@ -87,6 +87,19 @@ unsafe fn setup_vao(vertices: &Vec<f32>, indices: &Vec<u32>, colors: &Vec<f32>, 
     array //At the end we return the VAO ID. We will use this ID to refer to the array whenever we want to do something with it
 } 
 
+unsafe fn draw_scene(root: &scene_graph::SceneNode, view_projection_matrix: &glm::Mat4){
+    
+    //Check if node is drawable, set uniforms, draw
+    if(root.index_count > -1){
+        gl::BindVertexArray(root.vao_id); //bind
+        gl::DrawElements(gl::TRIANGLES, root.index_count, gl::UNSIGNED_INT, ptr::null()); //Draw
+    }
+
+    for &child in &root.children {
+        draw_scene(&*child, view_projection_matrix);
+    }
+}
+
 fn main() {
     // Set up the necessary objects to deal with windows and event handling
     let el = glutin::event_loop::EventLoop::new();
@@ -325,21 +338,7 @@ fn main() {
 
 
                 gl::UniformMatrix4fv(3, 1, gl::FALSE, transformationCombo.as_ptr()); //Pass the transformation matrix to the vertex shader at location = 3 as a uniform variable
-                
-                gl::BindVertexArray(value);
-                gl::DrawElements(gl::TRIANGLES, terrain_mesh.index_count, gl::UNSIGNED_INT, ptr::null()); //Draw terrain
-
-                gl::BindVertexArray(heli_body_vao);
-                gl::DrawElements(gl::TRIANGLES, heli_mesh.body.index_count, gl::UNSIGNED_INT, ptr::null()); //Draw helicopter body
-
-                gl::BindVertexArray(heli_main_rotor_vao);
-                gl::DrawElements(gl::TRIANGLES, heli_mesh.main_rotor.index_count, gl::UNSIGNED_INT, ptr::null()); //Draw helicopter main rotor
-
-                gl::BindVertexArray(heli_tail_rotor_vao);
-                gl::DrawElements(gl::TRIANGLES, heli_mesh.tail_rotor.index_count, gl::UNSIGNED_INT, ptr::null()); //Draw helicopter tail rotor
-
-                gl::BindVertexArray(heli_door_vao);
-                gl::DrawElements(gl::TRIANGLES, heli_mesh.door.index_count, gl::UNSIGNED_INT, ptr::null()); //Draw helicopter door
+                draw_scene(&root_scene_node , &transformationCombo);
             }
 
             context.swap_buffers().unwrap();
