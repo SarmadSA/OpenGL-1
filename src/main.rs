@@ -7,6 +7,7 @@ mod shader;
 mod util;
 mod mesh;
 mod scene_graph;
+mod toolbox;
 
 use glutin::event::{Event, WindowEvent, DeviceEvent, KeyboardInput, ElementState::{Pressed, Released}, VirtualKeyCode::{self, *}};
 use glutin::event_loop::ControlFlow;
@@ -88,16 +89,50 @@ unsafe fn setup_vao(vertices: &Vec<f32>, indices: &Vec<u32>, colors: &Vec<f32>, 
 } 
 
 unsafe fn draw_scene(root: &scene_graph::SceneNode, view_projection_matrix: &glm::Mat4){
-    
+
+    //MVP matirx
+    let mvp_matrix: glm::Mat4 = root.current_transformation_matrix * view_projection_matrix;
+
     //Check if node is drawable, set uniforms, draw
     if(root.index_count > -1){
+        gl::UniformMatrix4fv(4, 1, gl::FALSE, root.current_transformation_matrix.as_ptr());//Pass the model matrix as a uniform variable to the vertex shader. this will be used to transfrom the vertex normal and fix the lighting as the helicopter turns
+        gl::UniformMatrix4fv(5, 1, gl::FALSE, view_projection_matrix.as_ptr());//Pass the view projection matrix as a uniform variable to the vertex shader at location 5, used to transform the input vertext
+
+        gl::UniformMatrix4fv(3, 1, gl::FALSE, mvp_matrix.as_ptr());
+
         gl::BindVertexArray(root.vao_id); //bind
         gl::DrawElements(gl::TRIANGLES, root.index_count, gl::UNSIGNED_INT, ptr::null()); //Draw
     }
 
     for &child in &root.children {
-        draw_scene(&*child, view_projection_matrix);
+        draw_scene(&*child, &view_projection_matrix);
     }
+}
+
+
+unsafe fn update_node_transformations(root: &mut scene_graph::SceneNode, transformation_so_far: &glm::Mat4){
+    
+    //construct the correct transformation matrix
+    let translationMatrix: glm::Mat4 = glm::translation(&root.position); //This is the translation matrix
+    let transposeTranslation: glm::Mat4 = glm::transpose(&translationMatrix); //Transpose the translation matrix
+
+    let rotationX: glm::Mat4 = glm::rotation(root.rotation[0], &glm::vec3(root.reference_point[0],0.0,0.0)); //Rotate about the x-axis 
+    let rotationY: glm::Mat4 = glm::rotation(root.rotation[1], &glm::vec3(0.0,root.reference_point[1],0.0)); //Rotate about the y-axis 
+    let rotationZ: glm::Mat4 = glm::rotation(root.rotation[2], &glm::vec3(0.0,0.0,root.reference_point[2])); //Rotate about the z-axis 
+    let rotationMatrix: glm::Mat4 = rotationX * rotationY * rotationZ; //Rotate about the z-axis 
+    
+    //Move the root to the origin
+    //Translate by the inverse of a reference point
+
+    let transformationMatrix: glm::Mat4 = rotationMatrix * transposeTranslation; // here I should multiply by the translation matrix, however, I have a problem with it, it causes a wierd effect (I think shearing) and I was not able to solve it in time
+    let translateee: glm::Mat4 = glm::translation(&root.reference_point);
+
+    //update the node's transformation matrix
+    root.current_transformation_matrix = transformationMatrix * transformation_so_far;
+    
+    for &child in &root.children {
+        update_node_transformations(&mut *child, &root.current_transformation_matrix);
+     }
 }
 
 fn main() {
@@ -212,14 +247,17 @@ fn main() {
     //Here I create a scene graph
     let mut root_scene_node = scene_graph::SceneNode::new();//Generate a root scene node
     let mut terrain_scene_node = scene_graph::SceneNode::from_vao(value, terrain_mesh.index_count);//Generate a scene node for the terrain
+    
     let mut heli_body_node = scene_graph::SceneNode::from_vao(heli_body_vao, heli_mesh.body.index_count);//Generate a scene node for the helicopter body
     let mut heli_main_rotor_node = scene_graph::SceneNode::from_vao(heli_main_rotor_vao, heli_mesh.main_rotor.index_count);//Generate a scene node for the helicopter body
     let mut heli_tail_rotor_node = scene_graph::SceneNode::from_vao(heli_tail_rotor_vao, heli_mesh.tail_rotor.index_count);//Generate a scene node for the helicopter body
     let mut heli_door_node = scene_graph::SceneNode::from_vao(heli_door_vao, heli_mesh.door.index_count);//Generate a scene node for the helicopter body
 
     //Initilize the values in the scene node data structure to initial values
-    terrain_scene_node.position = glm::vec3(1.0, 0.0, 1.0); //set position of terrain
-    heli_body_node.position = glm::vec3(1.0, 0.0, 1.0); //Set position of helicopter body
+    heli_tail_rotor_node.reference_point = glm::vec3(0.35, 2.3, 10.4);
+    heli_body_node.reference_point = glm::vec3(-0.68, -0.19, -4.13);
+    heli_body_node.position = glm::vec3(0.5, 0.5, 0.0); //Set position of helicopter body for testing
+    heli_body_node.rotation = glm::vec3(0.0, 3.0, 0.0); //Set rotation of helicopter body for testing
 
     heli_body_node.add_child(&heli_main_rotor_node); //Add main rotor as a child node to helicopter
     heli_body_node.add_child(&heli_tail_rotor_node); //Add tail rotor as a child node to helicopter
@@ -227,6 +265,7 @@ fn main() {
     terrain_scene_node.add_child(&heli_body_node); //Add helicopter body as a child node to terrain node
     root_scene_node.add_child(&terrain_scene_node); //Add terrain scene node to the root node
 
+    //Here I debug
     root_scene_node.print();
     terrain_scene_node.print();
     heli_body_node.print();
@@ -249,6 +288,7 @@ fn main() {
         let identity: glm::Mat4 = glm::identity(); //Create identitiy matrix
         let projection: glm::Mat4 = glm::perspective(1.00, 1.00, 1.0, 1000.0); //Projection
 
+        let mut angel = 0.0;
 
         // The main rendering loop
         loop {
@@ -335,9 +375,16 @@ fn main() {
 
                 //Produce the tranformation matrics from individual transformations                
                 let transformationCombo: glm::Mat4 = transposeRotationX * transposeRotationY * transposeTranslation *  projection * identity; //Multiply to get the transformation matrix which is then passed to the vertex shader to apply the transformation
+                
+                heli_tail_rotor_node.rotation = glm::vec3(angel, 0.0, 0.0);
+                //heli_main_rotor_node.rotation = glm::vec3(0.0, 0.0, angel);
+                angel +=1.0 * elapsed;
+                
+                let headding = toolbox::simple_heading_animation(elapsed);
+                heli_body_node.rotation = glm::vec3(headding.pitch, headding.yaw, headding.roll);
+                heli_body_node.position = glm::vec3(headding.x, 0.0, headding.z);
 
-
-                gl::UniformMatrix4fv(3, 1, gl::FALSE, transformationCombo.as_ptr()); //Pass the transformation matrix to the vertex shader at location = 3 as a uniform variable
+                update_node_transformations(&mut root_scene_node, &glm::identity());
                 draw_scene(&root_scene_node , &transformationCombo);
             }
 

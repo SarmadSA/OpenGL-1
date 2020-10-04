@@ -8,5 +8,7 @@ vec3 lightDirection =  normalize(vec3(0.8, -0.5, 0.6));
 
 void main()
 {
-    color = inColors * vec4(max(vec3(0),inNormals * (-lightDirection)), 1.0);//Use color matrix to color the geometry
+    float maxi = max(0, dot(inNormals , (-lightDirection)));
+    color = vec4(inColors[0] * maxi, inColors[1] * maxi, inColors[2] * maxi, inColors[3]);//Color the geometry
+    //color = inColors * vec4(max(vec3(0),inNormals * (-lightDirection)), 1.0);//Use color matrix to color the geometry
 }
