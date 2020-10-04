@@ -399,9 +399,9 @@ fn main() {
                 
                 let mut offset = 0.0;
                 for x in 0..5 {
-                    let headding3 = toolbox::simple_heading_animation(elapsed + offset);
-                    vec[x].rotation = glm::vec3(headding3.pitch, headding3.yaw, headding3.roll);
-                    vec[x].position = glm::vec3(headding3.x, 0.0, headding3.z);
+                    let headding = toolbox::simple_heading_animation(elapsed + offset);
+                    vec[x].rotation = glm::vec3(headding.pitch, headding.yaw, headding.roll);
+                    vec[x].position = glm::vec3(headding.x, 0.0, headding.z);
                     offset += 0.8;
 
                     main_rotors[x].rotation = glm::vec3(0.0, angel, 0.0);
