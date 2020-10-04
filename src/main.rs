@@ -119,12 +119,15 @@ unsafe fn update_node_transformations(root: &mut scene_graph::SceneNode, transfo
     let rotationX: glm::Mat4 = glm::rotation(root.rotation[0], &glm::vec3(root.reference_point[0],0.0,0.0)); //Rotate about the x-axis 
     let rotationY: glm::Mat4 = glm::rotation(root.rotation[1], &glm::vec3(0.0,root.reference_point[1],0.0)); //Rotate about the y-axis 
     let rotationZ: glm::Mat4 = glm::rotation(root.rotation[2], &glm::vec3(0.0,0.0,root.reference_point[2])); //Rotate about the z-axis 
-    let rotationMatrix: glm::Mat4 = rotationX * rotationY * rotationZ; //Rotate about the z-axis 
+    let rotationMatrix: glm::Mat4 = rotationX * rotationY * rotationZ; //Calculate total rotation
     
-    //Move the root to the origin
-    //Translate by the inverse of a reference point
 
-    let transformationMatrix: glm::Mat4 = rotationMatrix * transposeTranslation;
+    /**
+     * I have to first move the rotor to the origin, then apply the rotation, and then move it back to where it was. Movement to the origin is done by translating by a vector which is the inverse of the reference point.
+     * My problem was that I don’t know the function in rust that returns the invers of a point. So it is not rotating about the reference point...
+     */
+    
+    let transformationMatrix: glm::Mat4 = rotationMatrix * transposeTranslation; //Calculate total transformation matrix
 
     //update the node's transformation matrix
     root.current_transformation_matrix = transformationMatrix * transformation_so_far;
@@ -188,9 +191,11 @@ fn main() {
     //Here I load the lunarsurface.obj
     let terrain_mesh = mesh::Terrain::load("./resources/lunarsurface.obj"); //Load the lunar surface
 
-    //Here I setup the VAO. As mentioned earlier this returns the array ID which I have to use later to draw the primitive     
-    let value = unsafe {
-        let vertices: Vec<f32> = terrain_mesh.vertices;
+    //Here I setup the VAOs. As mentioned earlier this returns the array ID which I have to use later to draw the primitive   
+    
+    //Setupt terrain vao
+    let terrain_vao = unsafe {
+        let vertices: Vec<f32> = terrain_mesh.vertices; //Get vertices, indices, colors and normals from terrain mesh 
         let indices: Vec<u32> = terrain_mesh.indices;
         let colors: Vec<f32> = terrain_mesh.colors;
         let normals: Vec<f32> = terrain_mesh.normals;
@@ -245,10 +250,10 @@ fn main() {
 
     //Here I create a scene graph
     let mut root_scene_node = scene_graph::SceneNode::new();//Generate a root scene node
-    let mut terrain_scene_node = scene_graph::SceneNode::from_vao(value, terrain_mesh.index_count);//Generate a scene node for the terrain
+    let mut terrain_scene_node = scene_graph::SceneNode::from_vao(terrain_vao, terrain_mesh.index_count);//Generate a scene node for the terrain
     
     //Create array of heli_body_node 's
-    let mut vec = Vec::new();
+    let mut heli_bodies = Vec::new();
     let mut main_rotors = Vec::new();
     let mut tail_rotors = Vec::new();
 
@@ -275,7 +280,7 @@ fn main() {
         terrain_scene_node.add_child(&heli_body_node); //Add helicopter body as a child node to terrain node
 
         //Push helicopter and its parts to it's arrays
-        vec.push(heli_body_node);
+        heli_bodies.push(heli_body_node);
         main_rotors.push(heli_main_rotor_node);
         tail_rotors.push(heli_tail_rotor_node);
     }
@@ -396,11 +401,12 @@ fn main() {
                 let transformationCombo: glm::Mat4 = transposeRotationX * transposeRotationY * transposeTranslation *  projection * identity; //Multiply to get the transformation matrix which is then passed to the vertex shader to apply the transformation
                 
                 
+                //Here I animate. I update the position and rotation of helicopters. I also animate the rotors
                 let mut offset = 0.0;
                 for x in 0..5 {
                     let headding = toolbox::simple_heading_animation(elapsed + offset);
-                    vec[x].rotation = glm::vec3(headding.pitch, headding.yaw, headding.roll);
-                    vec[x].position = glm::vec3(headding.x, 0.0, headding.z);
+                    heli_bodies[x].rotation = glm::vec3(headding.pitch, headding.yaw, headding.roll);
+                    heli_bodies[x].position = glm::vec3(headding.x, 0.0, headding.z);
                     offset += 0.8;
 
                     main_rotors[x].rotation = glm::vec3(0.0, angel, 0.0);
@@ -409,7 +415,7 @@ fn main() {
                     angel += 1.0 * elapsed;
                 }
 
-
+                //Here I update node transformations and draw.
                 update_node_transformations(&mut root_scene_node, &glm::identity());
                 draw_scene(&root_scene_node , &transformationCombo);
             }
