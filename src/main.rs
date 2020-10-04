@@ -248,27 +248,47 @@ fn main() {
     let mut root_scene_node = scene_graph::SceneNode::new();//Generate a root scene node
     let mut terrain_scene_node = scene_graph::SceneNode::from_vao(value, terrain_mesh.index_count);//Generate a scene node for the terrain
     
-    let mut heli_body_node = scene_graph::SceneNode::from_vao(heli_body_vao, heli_mesh.body.index_count);//Generate a scene node for the helicopter body
-    let mut heli_main_rotor_node = scene_graph::SceneNode::from_vao(heli_main_rotor_vao, heli_mesh.main_rotor.index_count);//Generate a scene node for the helicopter body
-    let mut heli_tail_rotor_node = scene_graph::SceneNode::from_vao(heli_tail_rotor_vao, heli_mesh.tail_rotor.index_count);//Generate a scene node for the helicopter body
-    let mut heli_door_node = scene_graph::SceneNode::from_vao(heli_door_vao, heli_mesh.door.index_count);//Generate a scene node for the helicopter body
+    //Create array of heli_body_node 's
+    let mut vec = Vec::new();
+    let mut main_rotors = Vec::new();
+    let mut tail_rotors = Vec::new();
 
-    //Initilize the values in the scene node data structure to initial values
-    heli_tail_rotor_node.reference_point = glm::vec3(0.35, 2.3, 10.4);
-    heli_body_node.reference_point = glm::vec3(-0.68, -0.19, -4.13);
-    heli_body_node.position = glm::vec3(0.5, 0.5, 0.0); //Set position of helicopter body for testing
-    heli_body_node.rotation = glm::vec3(0.0, 3.0, 0.0); //Set rotation of helicopter body for testing
+    //Here I do a for loop
+    //I push 5 bodyies, main rotors, tail rotors and doors
+    //I init ref points
+    //I add helicopter body as child to terrain node
+    for x in 0..5 {
+        let mut heli_body_node = scene_graph::SceneNode::from_vao(heli_body_vao, heli_mesh.body.index_count);//Generate a scene node for the helicopter body
+        let mut heli_main_rotor_node = scene_graph::SceneNode::from_vao(heli_main_rotor_vao, heli_mesh.main_rotor.index_count);//Generate a scene node for the helicopter body
+        let mut heli_tail_rotor_node = scene_graph::SceneNode::from_vao(heli_tail_rotor_vao, heli_mesh.tail_rotor.index_count);//Generate a scene node for the helicopter body
+        let mut heli_door_node = scene_graph::SceneNode::from_vao(heli_door_vao, heli_mesh.door.index_count);//Generate a scene node for the helicopter body
+        
+        //Set reference point
+        heli_tail_rotor_node.reference_point = glm::vec3(0.35, 2.3, 10.4);
+        heli_body_node.reference_point = glm::vec3(-0.68, -0.19, -4.13); 
+        heli_main_rotor_node.reference_point = glm::vec3(-0.68, -0.19, -4.13); //Since the origin of the helicopters model lines up with the main rotor on the xz-plane, this only has to match the referce point of the helicopter.
 
-    heli_body_node.add_child(&heli_main_rotor_node); //Add main rotor as a child node to helicopter
-    heli_body_node.add_child(&heli_tail_rotor_node); //Add tail rotor as a child node to helicopter
-    heli_body_node.add_child(&heli_door_node); //Add door as a child node to helicopter
-    terrain_scene_node.add_child(&heli_body_node); //Add helicopter body as a child node to terrain node
+        //Add helicopter parts
+        heli_body_node.add_child(&heli_main_rotor_node); //Add main rotor as a child node to helicopter
+        heli_body_node.add_child(&heli_tail_rotor_node); //Add tail rotor as a child node to helicopter
+        heli_body_node.add_child(&heli_door_node); //Add door as a child node to helicopter
+        
+        terrain_scene_node.add_child(&heli_body_node); //Add helicopter body as a child node to terrain node
+
+        //Push helicopter and its parts to it's arrays
+        vec.push(heli_body_node);
+        main_rotors.push(heli_main_rotor_node);
+        tail_rotors.push(heli_tail_rotor_node);
+    }
+
+    //heli_body_node.position = glm::vec3(0.5, 0.5, 0.0); //Set position of helicopter body for testing
+    //heli_body_node.rotation = glm::vec3(0.0, 3.0, 0.0); //Set rotation of helicopter body for testing
+
     root_scene_node.add_child(&terrain_scene_node); //Add terrain scene node to the root node
 
     //Here I debug
     root_scene_node.print();
     terrain_scene_node.print();
-    heli_body_node.print();
 
         // Used to demonstrate keyboard handling -- feel free to remove
         let mut _arbitrary_number = 0.0;
@@ -376,13 +396,20 @@ fn main() {
                 //Produce the tranformation matrics from individual transformations                
                 let transformationCombo: glm::Mat4 = transposeRotationX * transposeRotationY * transposeTranslation *  projection * identity; //Multiply to get the transformation matrix which is then passed to the vertex shader to apply the transformation
                 
-                heli_tail_rotor_node.rotation = glm::vec3(angel, 0.0, 0.0);
-                //heli_main_rotor_node.rotation = glm::vec3(0.0, 0.0, angel);
-                angel +=1.0 * elapsed;
                 
-                let headding = toolbox::simple_heading_animation(elapsed);
-                heli_body_node.rotation = glm::vec3(headding.pitch, headding.yaw, headding.roll);
-                heli_body_node.position = glm::vec3(headding.x, 0.0, headding.z);
+                let mut offset = 0.0;
+                for x in 0..5 {
+                    let headding3 = toolbox::simple_heading_animation(elapsed + offset);
+                    vec[x].rotation = glm::vec3(headding3.pitch, headding3.yaw, headding3.roll);
+                    vec[x].position = glm::vec3(headding3.x, 0.0, headding3.z);
+                    offset += 0.8;
+
+                    main_rotors[x].rotation = glm::vec3(0.0, angel, 0.0);
+                    tail_rotors[x].rotation = glm::vec3(0.0, angel, 0.0);
+
+                    angel += 1.0 * elapsed;
+                }
+
 
                 update_node_transformations(&mut root_scene_node, &glm::identity());
                 draw_scene(&root_scene_node , &transformationCombo);
