@@ -124,8 +124,7 @@ unsafe fn update_node_transformations(root: &mut scene_graph::SceneNode, transfo
     //Move the root to the origin
     //Translate by the inverse of a reference point
 
-    let transformationMatrix: glm::Mat4 = rotationMatrix * transposeTranslation; // here I should multiply by the translation matrix, however, I have a problem with it, it causes a wierd effect (I think shearing) and I was not able to solve it in time
-    let translateee: glm::Mat4 = glm::translation(&root.reference_point);
+    let transformationMatrix: glm::Mat4 = rotationMatrix * transposeTranslation;
 
     //update the node's transformation matrix
     root.current_transformation_matrix = transformationMatrix * transformation_so_far;
@@ -405,7 +404,7 @@ fn main() {
                     offset += 0.8;
 
                     main_rotors[x].rotation = glm::vec3(0.0, angel, 0.0);
-                    tail_rotors[x].rotation = glm::vec3(0.0, angel, 0.0);
+                    tail_rotors[x].rotation = glm::vec3(angel, 0.0, 0.0);
 
                     angel += 1.0 * elapsed;
                 }
