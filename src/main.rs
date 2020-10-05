@@ -5,6 +5,9 @@ use std::sync::{Mutex, Arc, RwLock};
 
 mod shader;
 mod util;
+mod mesh;
+mod scene_graph;
+mod toolbox;
 
 use glutin::event::{Event, WindowEvent, DeviceEvent, KeyboardInput, ElementState::{Pressed, Released}, VirtualKeyCode::{self, *}};
 use glutin::event_loop::ControlFlow;
@@ -40,7 +43,7 @@ fn offset<T>(n: u32) -> *const c_void {
 
 // == // Modify and complete the function below for the first task
 //This function sets up a vertex array object (VAO), it takes two arguments that is the data (vertices) and the indices (used to fill the index buffer to tell which vertices should be connected together) and it returns the VAO ID
-unsafe fn setup_vao(vertices: &Vec<f32>, indices: &Vec<u32>, colors: &Vec<f32>) -> u32 { 
+unsafe fn setup_vao(vertices: &Vec<f32>, indices: &Vec<u32>, colors: &Vec<f32>, normals: &Vec<f32>) -> u32 { 
     let mut array: u32 = 0; //a pointer to a location where the generated VAO ID can be stored. since we only are allocating a single VAO I created this empty unsigned int
     gl::GenVertexArrays(1, &mut array); //This will generate a VAO
     gl::BindVertexArray(array); //This will bind the VAO
@@ -48,10 +51,7 @@ unsafe fn setup_vao(vertices: &Vec<f32>, indices: &Vec<u32>, colors: &Vec<f32>) 
     let mut bufferID: u32 = 0; //Here the ID of the buffer (VBO) will be stored
     gl::GenBuffers(1, &mut bufferID); // This will genereate a buffer
     gl::BindBuffer(gl::ARRAY_BUFFER, bufferID);// this will bind the buffer in the created earlier in last line
-
     gl::BufferData(gl::ARRAY_BUFFER, byte_size_of_array(&vertices), pointer_to_array(&vertices), gl::STATIC_DRAW); //Here we will fill the buffer with our data
-    
-
     gl::VertexAttribPointer(0, 3, gl::FLOAT, gl::FALSE, 0, ptr::null()); //Here we define a format for our buffer (because we didnt tell OpenGL about our data, so it does not know if we passed x,y or x,y,z etc, here we tell it)
     gl::EnableVertexAttribArray(0); //This will enable the pointer. index is same as in previwes line
 
@@ -60,18 +60,25 @@ unsafe fn setup_vao(vertices: &Vec<f32>, indices: &Vec<u32>, colors: &Vec<f32>) 
     let mut bufferID2: u32 = 0; //Soter the ID of the buffer
     gl::GenBuffers(1, &mut bufferID2); //Generate buffer
     gl::BindBuffer(gl::ELEMENT_ARRAY_BUFFER, bufferID2);// bind the buffer
-
     gl::BufferData(gl::ELEMENT_ARRAY_BUFFER, byte_size_of_array(&indices), pointer_to_array(&indices), gl::STATIC_DRAW);//Fill wil indices
 
 
+    //Color
     let mut bufferID3: u32 = 0; 
     gl::GenBuffers(1, &mut bufferID3); //Generate buffer
-    gl::BindBuffer(gl::ARRAY_BUFFER, bufferID3);// bind the buffer //TODO ARRAY_BUFFER? or other?
-
-    gl::BufferData(gl::ARRAY_BUFFER, byte_size_of_array(&colors), pointer_to_array(&colors), gl::STATIC_DRAW);//Fill with colors //TODO ARRAY_BUFFER? or other?
-
+    gl::BindBuffer(gl::ARRAY_BUFFER, bufferID3);// bind the buffer
+    gl::BufferData(gl::ARRAY_BUFFER, byte_size_of_array(&colors), pointer_to_array(&colors), gl::STATIC_DRAW);//Fill with colors
     gl::VertexAttribPointer(1, 4, gl::FLOAT, gl::FALSE, 0, ptr::null()); //Here we define a format for our buffer (because we didnt tell OpenGL about our data, so it does not know if we passed x,y or x,y,z etc, here we tell it)
-    gl::EnableVertexAttribArray(1); //This will enable the pointer. index is same as in previwes line
+    gl::EnableVertexAttribArray(1); //This will enable the pointer. index is same as in previous line
+
+
+    //Normal
+    let mut bufferID4: u32 = 0; 
+    gl::GenBuffers(1, &mut bufferID4); //Generate buffer
+    gl::BindBuffer(gl::ARRAY_BUFFER, bufferID4);// bind the buffer
+    gl::BufferData(gl::ARRAY_BUFFER, byte_size_of_array(&normals), pointer_to_array(&normals), gl::STATIC_DRAW);//Fill with normals
+    gl::VertexAttribPointer(2, 3, gl::FLOAT, gl::FALSE, 0, ptr::null()); //Here we define a format for our buffer (because we didnt tell OpenGL about our data, so it does not know if we passed x,y or x,y,z etc, here we tell it)
+    gl::EnableVertexAttribArray(2); //This will enable the pointer. index is same as in previous line
 
     //Find the max (for index (the first parameter) in function glVertexattribPointer)
     //int maxVertexAttribs;
@@ -80,6 +87,55 @@ unsafe fn setup_vao(vertices: &Vec<f32>, indices: &Vec<u32>, colors: &Vec<f32>) 
 
     array //At the end we return the VAO ID. We will use this ID to refer to the array whenever we want to do something with it
 } 
+
+unsafe fn draw_scene(root: &scene_graph::SceneNode, view_projection_matrix: &glm::Mat4){
+
+    //MVP matirx
+    let mvp_matrix: glm::Mat4 = root.current_transformation_matrix * view_projection_matrix;
+
+    //Check if node is drawable, set uniforms, draw
+    if(root.index_count > -1){
+        gl::UniformMatrix4fv(4, 1, gl::FALSE, root.current_transformation_matrix.as_ptr());//Pass the model matrix as a uniform variable to the vertex shader. this will be used to transfrom the vertex normal and fix the lighting as the helicopter turns
+        gl::UniformMatrix4fv(5, 1, gl::FALSE, view_projection_matrix.as_ptr());//Pass the view projection matrix as a uniform variable to the vertex shader at location 5, used to transform the input vertext
+
+        gl::UniformMatrix4fv(3, 1, gl::FALSE, mvp_matrix.as_ptr());
+
+        gl::BindVertexArray(root.vao_id); //bind
+        gl::DrawElements(gl::TRIANGLES, root.index_count, gl::UNSIGNED_INT, ptr::null()); //Draw
+    }
+
+    for &child in &root.children {
+        draw_scene(&*child, &view_projection_matrix);
+    }
+}
+
+
+unsafe fn update_node_transformations(root: &mut scene_graph::SceneNode, transformation_so_far: &glm::Mat4){
+    
+    //construct the correct transformation matrix
+    let translationMatrix: glm::Mat4 = glm::translation(&root.position); //This is the translation matrix
+    let transposeTranslation: glm::Mat4 = glm::transpose(&translationMatrix); //Transpose the translation matrix
+
+    let rotationX: glm::Mat4 = glm::rotation(root.rotation[0], &glm::vec3(root.reference_point[0],0.0,0.0)); //Rotate about the x-axis 
+    let rotationY: glm::Mat4 = glm::rotation(root.rotation[1], &glm::vec3(0.0,root.reference_point[1],0.0)); //Rotate about the y-axis 
+    let rotationZ: glm::Mat4 = glm::rotation(root.rotation[2], &glm::vec3(0.0,0.0,root.reference_point[2])); //Rotate about the z-axis 
+    let rotationMatrix: glm::Mat4 = rotationX * rotationY * rotationZ; //Calculate total rotation
+    
+
+    /**
+     * I have to first move the rotor to the origin, then apply the rotation, and then move it back to where it was. Movement to the origin is done by translating by a vector which is the inverse of the reference point.
+     * My problem was that I don’t know the function in rust that returns the invers of a point. So it is not rotating about the reference point...
+     */
+    
+    let transformationMatrix: glm::Mat4 = rotationMatrix * transposeTranslation; //Calculate total transformation matrix
+
+    //update the node's transformation matrix
+    root.current_transformation_matrix = transformationMatrix * transformation_so_far;
+    
+    for &child in &root.children {
+        update_node_transformations(&mut *child, &root.current_transformation_matrix);
+     }
+}
 
 fn main() {
     // Set up the necessary objects to deal with windows and event handling
@@ -132,40 +188,57 @@ fn main() {
             println!("GLSL\t: {}", util::get_gl_string(gl::SHADING_LANGUAGE_VERSION));
         }
 
-        // == // Set up your VAO here
+    //Here I load the lunarsurface.obj
+    let terrain_mesh = mesh::Terrain::load("./resources/lunarsurface.obj"); //Load the lunar surface
 
-    //Here I setup the VAO. As mentioned earlier this returns the array ID which I have to use later to draw the primitive     
+    //Here I setup the VAOs. As mentioned earlier this returns the array ID which I have to use later to draw the primitive   
     
-    let value = unsafe {
-        let vertices: Vec<f32> = vec![
-            //Triangle 
-            0.0, 0.2, 0.7,
-            -0.2, -0.2, 0.7,
-            0.2,  -0.2, 0.7,
-            0.0, -0.2, 0.8,
-            0.4, -0.2, 0.8,
-            0.2,  0.2, 0.8,
-            0.1, 0.0, 0.9,
-            -0.2, -0.4, 0.9,
-            0.4, -0.4, 0.9,
-    ];
+    //Setupt terrain vao
+    let terrain_vao = unsafe {
+        let vertices: Vec<f32> = terrain_mesh.vertices; //Get vertices, indices, colors and normals from terrain mesh 
+        let indices: Vec<u32> = terrain_mesh.indices;
+        let colors: Vec<f32> = terrain_mesh.colors;
+        let normals: Vec<f32> = terrain_mesh.normals;
+        setup_vao(&vertices, &indices, &colors, &normals)    
+    };
 
-        let indices: Vec<u32> = vec![0, 1, 2, 3, 4, 5, 6, 7, 8];
-        let colors: Vec<f32> = vec![
-            0.0, 0.0, 1.0, 0.35,
-            0.0, 0.0, 1.0, 0.35,
-            0.0, 0.0, 1.0, 0.35,
-            0.0, 1.0, 0.0, 0.35,
-            0.0, 1.0, 0.0, 0.35,
-            0.0, 1.0, 0.0, 0.35,
-            1.0, 0.0, 0.0, 0.35,
-            1.0, 0.0, 0.0, 0.35,
-            1.0, 0.0, 0.0, 0.35,
-            ];
-        setup_vao(&vertices, &indices, &colors)    
+
+    let heli_mesh = mesh::Helicopter::load("./resources/helicopter.obj"); //Load helicopter
+
+    let heli_body_vao = unsafe {
+        let vertices: Vec<f32> = heli_mesh.body.vertices;
+        let indices: Vec<u32> = heli_mesh.body.indices;
+        let colors: Vec<f32> = heli_mesh.body.colors;
+        let normals: Vec<f32> = heli_mesh.body.normals;
+        setup_vao(&vertices, &indices, &colors, &normals)    
+    };
+
+
+    let heli_main_rotor_vao = unsafe {
+        let vertices: Vec<f32> = heli_mesh.main_rotor.vertices;
+        let indices: Vec<u32> = heli_mesh.main_rotor.indices;
+        let colors: Vec<f32> = heli_mesh.main_rotor.colors;
+        let normals: Vec<f32> = heli_mesh.main_rotor.normals;
+        setup_vao(&vertices, &indices, &colors, &normals)    
+    };
+
+    let heli_tail_rotor_vao = unsafe {
+        let vertices: Vec<f32> = heli_mesh.tail_rotor.vertices;
+        let indices: Vec<u32> = heli_mesh.tail_rotor.indices;
+        let colors: Vec<f32> = heli_mesh.tail_rotor.colors;
+        let normals: Vec<f32> = heli_mesh.tail_rotor.normals;
+        setup_vao(&vertices, &indices, &colors, &normals)    
+    };
+
+
+    let heli_door_vao = unsafe {
+        let vertices: Vec<f32> = heli_mesh.door.vertices;
+        let indices: Vec<u32> = heli_mesh.door.indices;
+        let colors: Vec<f32> = heli_mesh.door.colors;
+        let normals: Vec<f32> = heli_mesh.door.normals;
+        setup_vao(&vertices, &indices, &colors, &normals)    
     };
     
-
     // Basic usage of shader helper
     // The code below returns a shader object, which contains the field .program_id
     // The snippet is not enough to do the assignment, and will need to be modified (outside of just using the correct path)
@@ -174,6 +247,52 @@ fn main() {
     let shader = unsafe{
         shader::ShaderBuilder::new().attach_file("./shaders/simple.vert").attach_file("./shaders/simple.frag").link()
     };
+
+    //Here I create a scene graph
+    let mut root_scene_node = scene_graph::SceneNode::new();//Generate a root scene node
+    let mut terrain_scene_node = scene_graph::SceneNode::from_vao(terrain_vao, terrain_mesh.index_count);//Generate a scene node for the terrain
+    
+    //Create array of heli_body_node 's
+    let mut heli_bodies = Vec::new();
+    let mut main_rotors = Vec::new();
+    let mut tail_rotors = Vec::new();
+
+    //Here I do a for loop
+    //I push 5 bodyies, main rotors, tail rotors and doors
+    //I init ref points
+    //I add helicopter body as child to terrain node
+    for x in 0..5 {
+        let mut heli_body_node = scene_graph::SceneNode::from_vao(heli_body_vao, heli_mesh.body.index_count);//Generate a scene node for the helicopter body
+        let mut heli_main_rotor_node = scene_graph::SceneNode::from_vao(heli_main_rotor_vao, heli_mesh.main_rotor.index_count);//Generate a scene node for the helicopter body
+        let mut heli_tail_rotor_node = scene_graph::SceneNode::from_vao(heli_tail_rotor_vao, heli_mesh.tail_rotor.index_count);//Generate a scene node for the helicopter body
+        let mut heli_door_node = scene_graph::SceneNode::from_vao(heli_door_vao, heli_mesh.door.index_count);//Generate a scene node for the helicopter body
+        
+        //Set reference point
+        heli_tail_rotor_node.reference_point = glm::vec3(0.35, 2.3, 10.4);
+        heli_body_node.reference_point = glm::vec3(-0.68, -0.19, -4.13); 
+        heli_main_rotor_node.reference_point = glm::vec3(-0.68, -0.19, -4.13); //Since the origin of the helicopters model lines up with the main rotor on the xz-plane, this only has to match the referce point of the helicopter.
+
+        //Add helicopter parts
+        heli_body_node.add_child(&heli_main_rotor_node); //Add main rotor as a child node to helicopter
+        heli_body_node.add_child(&heli_tail_rotor_node); //Add tail rotor as a child node to helicopter
+        heli_body_node.add_child(&heli_door_node); //Add door as a child node to helicopter
+        
+        terrain_scene_node.add_child(&heli_body_node); //Add helicopter body as a child node to terrain node
+
+        //Push helicopter and its parts to it's arrays
+        heli_bodies.push(heli_body_node);
+        main_rotors.push(heli_main_rotor_node);
+        tail_rotors.push(heli_tail_rotor_node);
+    }
+
+    //heli_body_node.position = glm::vec3(0.5, 0.5, 0.0); //Set position of helicopter body for testing
+    //heli_body_node.rotation = glm::vec3(0.0, 3.0, 0.0); //Set rotation of helicopter body for testing
+
+    root_scene_node.add_child(&terrain_scene_node); //Add terrain scene node to the root node
+
+    //Here I debug
+    root_scene_node.print();
+    terrain_scene_node.print();
 
         // Used to demonstrate keyboard handling -- feel free to remove
         let mut _arbitrary_number = 0.0;
@@ -190,9 +309,10 @@ fn main() {
         let first_frame_time = std::time::Instant::now();
         let mut last_frame_time = first_frame_time;
 
-        let identity: glm::Mat4 = glm::identity(); 
-        let projection: glm::Mat4 = glm::perspective(1.00, 1.00, 1.0, 100.0);
+        let identity: glm::Mat4 = glm::identity(); //Create identitiy matrix
+        let projection: glm::Mat4 = glm::perspective(1.00, 1.00, 1.0, 1000.0); //Projection
 
+        let mut angel = 0.0;
 
         // The main rendering loop
         loop {
@@ -200,6 +320,8 @@ fn main() {
             let elapsed = now.duration_since(first_frame_time).as_secs_f32();
             let delta_time = now.duration_since(last_frame_time).as_secs_f32();
             last_frame_time = now;
+            
+            let speed = 1.0;
 
             // Handle keyboard input
             if let Ok(keys) = pressed_keys.lock() {
@@ -208,22 +330,22 @@ fn main() {
 
                          /*Use WASDEQ for camera movements*/
                         VirtualKeyCode::W => {
-                            _z += delta_time;
+                            _z += speed;
                         },
                         VirtualKeyCode::S => {
-                            _z -= delta_time;
+                            _z -= speed;
                         },
                         VirtualKeyCode::E => {
-                            _y += delta_time;
+                            _y += speed;
                         },
                         VirtualKeyCode::Q => {
-                            _y -= delta_time;
+                            _y -= speed;
                         },
                         VirtualKeyCode::A => {
-                            _x += delta_time;
+                            _x += speed;
                         },
                         VirtualKeyCode::D => {
-                            _x -= delta_time;
+                            _x -= speed;
                         },
 
                         /* Use arrows for camera rotations*/ 
@@ -262,7 +384,7 @@ fn main() {
                 //Here I am using the program ID I get retuned from the shader object
                 gl::UseProgram(shader.program_id);
 
-                
+
                 //let scaling: glm::Mat4 = glm::scaling(&glm::vec3(1.0,1.0,1.0));
 
                 //Translation
@@ -277,12 +399,25 @@ fn main() {
 
                 //Produce the tranformation matrics from individual transformations                
                 let transformationCombo: glm::Mat4 = transposeRotationX * transposeRotationY * transposeTranslation *  projection * identity; //Multiply to get the transformation matrix which is then passed to the vertex shader to apply the transformation
+                
+                
+                //Here I animate. I update the position and rotation of helicopters. I also animate the rotors
+                let mut offset = 0.0;
+                for x in 0..5 {
+                    let headding = toolbox::simple_heading_animation(elapsed + offset);
+                    heli_bodies[x].rotation = glm::vec3(headding.pitch, headding.yaw, headding.roll);
+                    heli_bodies[x].position = glm::vec3(headding.x, 0.0, headding.z);
+                    offset += 0.8;
 
+                    main_rotors[x].rotation = glm::vec3(0.0, angel, 0.0);
+                    tail_rotors[x].rotation = glm::vec3(angel, 0.0, 0.0);
 
-                gl::UniformMatrix4fv(3, 1, gl::FALSE, transformationCombo.as_ptr()); //Pass the transformation matrix to the vertex shader at location = 3 as a uniform variable
+                    angel += 1.0 * elapsed;
+                }
 
-                gl::DrawElements(gl::TRIANGLES, 9, gl::UNSIGNED_INT, ptr::null()); //Draw 3 triangles
-
+                //Here I update node transformations and draw.
+                update_node_transformations(&mut root_scene_node, &glm::identity());
+                draw_scene(&root_scene_node , &transformationCombo);
             }
 
             context.swap_buffers().unwrap();
